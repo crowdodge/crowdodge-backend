@@ -19,4 +19,5 @@ include(
     ":app",
     ":shared:kernel",
     ":shared:infra",
+    ":konsist",
 )
