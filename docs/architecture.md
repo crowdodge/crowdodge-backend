@@ -75,7 +75,7 @@ crowdodge-backend/
 │   └── .../app/{Application.kt, plugins/, db/(R2DBC接続+Flyway(JDBC)), di/AppModule.kt}
 ├── shared/
 │   ├── kernel/                      # UserId, Location, TimeRange, DomainEvent 基底, 共通エラー型, TransactionRunner
-│   └── infra/                       # R2DBC基盤, EventBus, OAuth基盤, Outbox, Problem(RFC9457)
+│   └── infra/                       # R2DBC基盤, メッセージング基盤, OAuth基盤, Problem(RFC9457)
 └── contexts/
     ├── user/          # ユーザー/設定/カレンダー/デバイス/課金
     ├── event/         # 予定（旧 schedule）
@@ -207,8 +207,8 @@ com.crowdodge.<bc>
 
 ## 9. 非同期処理・イベントバス・通知ジョブ
 
-- **インプロセス EventBus** で BC 間ドメインイベントを配送。
-- 信頼性が要る連携（特に通知）は **Outbox パターン**（ドメイン操作と同一トランザクションで `outbox` へ → 別ワーカーが配送）。
+- BC 間はドメインイベントで連携する（被駆動ポート `DomainEventPublisher`）。
+- **配送の実装方式は未確定**（→ §15）。application はポートにのみ依存し、実装は方針決定後に infrastructure へ追加する。
 - **通知ジョブ**: `notification_schedules` は `status` が `pending → processing → completed/failed/cancelled` と遷移するキュー。スケジューラが常時ポーリングし、`notificate_time` 到来分を `processing` に確保 → FCM 送信 → `completed`。予定削除等で不要化すれば `cancelled`。
 - スケジューラ方式（DBポーリング / Quartz 等）は §15。
 
@@ -243,7 +243,7 @@ class ScheduleEventUseCase(
         val event = buildEvent(cmd)                 // Raise（純粋・tx外）
         tx.inTransaction {                          // トランザクション境界（§11）
             repo.save(event)
-            events.publish(EventScheduled(event.id))// Outbox へ（同一tx）
+            events.publish(EventScheduled(event.id))// ドメインイベント発行（同一tx）
         }
         event.id
     }
@@ -281,11 +281,11 @@ fun EventError.toProblem() = when (this) {
 
 - **境界 = application のユースケース単位**（1 ユースケース = 1 トランザクション、原則 1 集約の変更）。
 - application は Exposed を import しないため、**ポートで逆転**:
-  - `shared/kernel` に `fun interface TransactionRunner { suspend fun <T> inTransaction(block: suspend () -> T): T }`
+  - `shared/kernel` に `interface TransactionRunner { suspend fun <T> inTransaction(block): T /* 書き込み */; suspend fun <T> readOnly(block): T /* 読み取り専用 */ }`
   - infrastructure で `suspendTransaction` を使い実装。
 - **純粋ロジック（Raise検証）はトランザクションの外**。失敗なら DB に触れず即 return（ロック保持最小化）。
-- **集約保存と Outbox 挿入は同一トランザクション**（原子性）。リポジトリは自前で `suspendTransaction` を開かず、ユースケースが開いた現在のトランザクションに参加。
-- **BC 跨ぎは分散トランザクションをしない＝結果整合性**（各 BC は自分の tx をコミットし、イベント+Outbox で次をトリガ）。
+- リポジトリは自前で `suspendTransaction` を開かず、ユースケースが開いた現在のトランザクションに参加。
+- **BC 跨ぎは分散トランザクションをしない＝結果整合性**（各 BC は自分の tx をコミットし、ドメインイベントで次をトリガ）。
 - **外部API呼び出し（GCal/Gemini/FCM）はトランザクション内に入れない**。
 - R2DBC 注意: トランザクションはコルーチンコンテキストに束縛。tx 内で別ディスパッチャへ飛ばすと引き継がれないため tx 内は基本シーケンシャル。
 
@@ -330,7 +330,7 @@ class ExposedEventRepository(private val db: R2dbcDatabase) : EventRepository {
 3. **event（コア）**: 予定 CRUD（繰り返し+例外含む）+ GCal 同期。
 4. **destination**: `EventScheduled` 購読 → 目的地推定（初期はルールベース）。
 5. **congestion**: `EventDestinationEstimated` 購読 → Gemini → 混雑予測。
-6. **notification**: 即時通知 + 前日/当日リマインド（Outbox + スケジューラ + FCM）。
+6. **notification**: 即時通知 + 前日/当日リマインド（スケジューラ + FCM）。
 7. **マネタイズ**（UserSubscription/RevenueCat、広告非表示、ノイズ修正申請）。
 
 ---
