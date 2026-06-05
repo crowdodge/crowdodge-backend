@@ -8,7 +8,7 @@ kotlin {
 }
 
 dependencies {
-    api(project(":shared:kernel"))
+    api(projects.shared.kernel)
 
     // R2DBC + Exposed（永続化基盤 §12）
     api(libs.exposed.core)

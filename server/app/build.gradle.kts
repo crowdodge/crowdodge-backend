@@ -15,8 +15,8 @@ application {
 
 dependencies {
     // app だけが全 BC（現時点では shared）を知り、Koin で配線する（§4）。
-    implementation(project(":shared:kernel"))
-    implementation(project(":shared:infra"))
+    implementation(projects.shared.kernel)
+    implementation(projects.shared.infra)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)
