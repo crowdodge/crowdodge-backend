@@ -31,6 +31,8 @@ subprojects {
     configure<DetektExtension> {
         buildUponDefaultConfig = true
         config.setFrom(rootProject.file("config/detekt/detekt.yml"))
+        // SARIF のパスを git ルート相対（server/...）で出力し、CI の reviewdog が PR 差分に対応付けられるようにする。
+        basePath = rootProject.projectDir.parent
     }
 
     dependencies {

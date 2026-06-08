@@ -14,3 +14,15 @@ tasks:
     dir: server
     cmds:
       - ./gradlew detekt --auto-correct
+
+  build:
+    desc: 成果物ビルド（assemble のみ。テスト・detekt は含めない）
+    dir: server
+    cmds:
+      - ./gradlew assemble
+
+  ci:
+    desc: CI と同じチェックをローカルで実行（lint + test + build を 1 回の Gradle 呼び出しで）
+    dir: server
+    cmds:
+      - ./gradlew detekt assemble test
