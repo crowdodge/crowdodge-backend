@@ -5,11 +5,7 @@ on:
     paths:
       - "server/**"
       - ".github/**"
-  push:
-    branches: [develop]
-    paths:
-      - "server/**"
-      - ".github/**"
+
 
 jobs:
   # 静的解析＋整形。detekt がゲート（違反でジョブを fail）、reviewdog は PR 該当行へ指摘を出す。
@@ -28,13 +24,13 @@ jobs:
         run: ./gradlew detekt
 
       # PR のときだけ該当行にインラインコメント（GHAS 不要。GITHUB_TOKEN のみ）。
-      # detekt が落ちてもコメントを出すため always()。ゲート自体は上の detekt ステップが担う。
+      # detekt が落ちてもコメントを出す。ゲート自体は上の detekt ステップが担う。
       - name: Setup reviewdog
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: ${{ success() || failure() }}
         uses: reviewdog/action-setup@v1
 
       - name: Report detekt to PR
-        if: ${{ always() && github.event_name == 'pull_request' }}
+        if: ${{ success() || failure() }}
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # SARIF のパス解決はリポジトリ構成（server/ サブディレクトリ）に依存するため、初回 CI で要確認。
@@ -44,12 +40,24 @@ jobs:
             -filter-mode=added \
             < server/build/reports/detekt/merged.sarif
 
-  # コンパイル＋テスト。
+  # 最小限のユニットテスト
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-gradle
+
+      # 過去のキャッシュ（UP-TO-DATE）を最大限活かし、変更があったテストだけを実行
+      - name: test
+        working-directory: server
+        run: ./gradlew test
+
+  # 成果物ビルド（assemble のみ）。テストと detekt は走らせず、lint と明確に分離する。
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-gradle
-      - name: build
+      - name: assemble
         working-directory: server
-        run: ./gradlew build
+        run: ./gradlew assemble
