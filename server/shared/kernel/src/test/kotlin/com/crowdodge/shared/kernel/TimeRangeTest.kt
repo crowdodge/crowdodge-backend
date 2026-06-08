@@ -2,8 +2,8 @@ package com.crowdodge.shared.kernel
 
 import java.time.Instant
 import kotlin.test.Test
-import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TimeRangeTest {

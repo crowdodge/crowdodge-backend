@@ -25,8 +25,13 @@ data class Problem(
     val detail: String? = null,
     val violations: List<Violation> = emptyList(),
 ) {
+    companion object {
+        private const val MIN_HTTP_STATUS = 100
+        private const val MAX_HTTP_STATUS = 599
+    }
+
     init {
-        require(status in 100..599) { "HTTP ステータスは 100..599 の範囲: $status" }
+        require(status in MIN_HTTP_STATUS..MAX_HTTP_STATUS) { "HTTP ステータスは 100..599 の範囲: $status" }
     }
 
     @Serializable
