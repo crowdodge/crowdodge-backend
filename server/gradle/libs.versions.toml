@@ -17,6 +17,7 @@ junit = "5.13.4"
 junitPlatform = "1.13.4"
 mockk = "1.14.5"
 testcontainers = "1.21.3"
+kotest = "6.1.11"
 konsist = "0.17.3"
 detekt = "1.23.8"
 
@@ -61,7 +62,12 @@ typesafe-config = { module = "com.typesafe:config", version.ref = "typesafeConfi
 # ログ
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 # テスト
-kotlin-test-junit5 = { module = "org.jetbrains.kotlin:kotlin-test-junit5", version.ref = "kotlin" }
+# Kotest（テストFW。runner/assertions/property/extensions すべて io.kotest 群で同一版に揃える）
+kotest-runner-junit5 = { module = "io.kotest:kotest-runner-junit5", version.ref = "kotest" }
+kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+kotest-assertions-arrow = { module = "io.kotest:kotest-assertions-arrow", version.ref = "kotest" }
+kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+kotest-extensions-testcontainers = { module = "io.kotest:kotest-extensions-testcontainers", version.ref = "kotest" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitPlatform" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }

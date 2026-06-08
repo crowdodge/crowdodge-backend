@@ -1,28 +1,24 @@
 package com.crowdodge.shared.kernel
 
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import java.time.Instant
-import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
-class TimeRangeTest {
-    private val t0 = Instant.parse("2026-06-03T10:00:00Z")
-    private val t1 = Instant.parse("2026-06-03T11:00:00Z")
-    private val t2 = Instant.parse("2026-06-03T12:00:00Z")
+class TimeRangeTest : FunSpec({
+    val t0 = Instant.parse("2026-06-03T10:00:00Z")
+    val t1 = Instant.parse("2026-06-03T11:00:00Z")
+    val t2 = Instant.parse("2026-06-03T12:00:00Z")
 
-    @Test
-    fun `end が start より前なら生成に失敗する`() {
-        assertFailsWith<IllegalArgumentException> { TimeRange(t1, t0) }
+    test("end が start より前なら生成に失敗する") {
+        shouldThrow<IllegalArgumentException> { TimeRange(t1, t0) }
     }
 
-    @Test
-    fun `重なる範囲を検出する`() {
-        assertTrue(TimeRange(t0, t2).overlaps(TimeRange(t1, t2)))
+    test("重なる範囲を検出する") {
+        TimeRange(t0, t2).overlaps(TimeRange(t1, t2)) shouldBe true
     }
 
-    @Test
-    fun `隣接するだけの範囲は重ならない`() {
-        assertFalse(TimeRange(t0, t1).overlaps(TimeRange(t1, t2)))
+    test("隣接するだけの範囲は重ならない") {
+        TimeRange(t0, t1).overlaps(TimeRange(t1, t2)) shouldBe false
     }
-}
+})

@@ -15,7 +15,8 @@ dependencies {
     // presentation 層の DTO は kotlinx.serialization（§1）。
     implementation(libs.kotlinx.serialization.json)
 
-    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

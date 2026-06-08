@@ -46,7 +46,8 @@ dependencies {
     implementation(libs.logback.classic)
 
     testImplementation(libs.ktor.server.test.host)
-    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

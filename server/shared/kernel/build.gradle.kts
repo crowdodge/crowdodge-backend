@@ -12,7 +12,8 @@ dependencies {
     api(libs.arrow.core)
     api(libs.kotlinx.coroutines.core)
 
-    testImplementation(libs.kotlin.test.junit5)
+    testImplementation(libs.kotest.runner.junit5)
+    testImplementation(libs.kotest.assertions.core)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
