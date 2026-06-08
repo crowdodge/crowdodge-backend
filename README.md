@@ -84,9 +84,15 @@ task format   # 整形を自動修正（= ./gradlew detekt --auto-correct）
 
 ## ヘルスチェック
 
+liveness と readiness を分離している。
+
 ```
-GET /health  ->  200 {"status":"UP","service":"crowdodge-backend"}
+GET /health  ->  200 {"status":"UP","service":"crowdodge-backend"}   # liveness（プロセス生存のみ。DB 非依存）
+GET /ready    ->  200 {"status":"READY"}                              # readiness（DB 到達OK）
+             ->  503 {"status":"NOT_READY"}                           # readiness（DB 不通／タイムアウト）
 ```
+
+`/ready` は R2DBC で `SELECT 1` を実行して DB 到達性を確認する（R2DBC は遅延接続のため、ここで初めて実接続を張る）。
 
 ## ロードマップ
 
