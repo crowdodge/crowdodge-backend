@@ -14,3 +14,13 @@ tasks:
     dir: server
     cmds:
       - ./gradlew detekt --auto-correct
+
+  build:
+    desc: ビルド（コンパイル＋テスト）
+    dir: server
+    cmds:
+      - ./gradlew build
+
+  ci:
+    desc: CI と同じチェックをローカルで実行（detekt + build）
+    deps: [detekt, build]

@@ -1,0 +1,20 @@
+name: Setup Gradle
+description: JDK（temurin）と Gradle キャッシュをセットアップする共通アクション。lint/build/将来の test ジョブから再利用する。
+
+inputs:
+  java-version:
+    description: セットアップする JDK バージョン
+    required: false
+    default: "21"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up JDK
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: ${{ inputs.java-version }}
+
+    - name: Set up Gradle
+      uses: gradle/actions/setup-gradle@v4
