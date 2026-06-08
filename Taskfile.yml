@@ -1,0 +1,16 @@
+# go-task タスク定義（https://taskfile.dev）。
+# Gradle プロジェクトは server/ 配下にあるため、各タスクで dir: server を指定する。
+version: '3'
+
+tasks:
+  detekt:
+    desc: detekt で静的解析＋整形チェック（CI と同じ検査）
+    dir: server
+    cmds:
+      - ./gradlew detekt
+
+  format:
+    desc: detekt で整形を自動修正
+    dir: server
+    cmds:
+      - ./gradlew detekt --auto-correct
