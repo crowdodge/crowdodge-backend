@@ -40,6 +40,24 @@ cd server
 ./gradlew :app:run
 ```
 
+### 開発用 DB（Docker Compose）
+
+ローカル開発用の PostgreSQL + PostGIS をリポジトリルートの `compose.yml` で起動できる（要 **Docker Compose v2**。`docker-compose` v1 は非対応）。アプリ本体はホストの Gradle で起動し、DB だけをコンテナ化する（テストは Testcontainers が自前で起動）。
+
+```bash
+# DB 起動（リポジトリルートで）
+docker compose up -d db
+
+# マイグレーション適用 → アプリ起動（server/ で）
+cd server
+./gradlew :app:flywayMigrate
+./gradlew :app:run
+```
+
+- 接続情報は `.env`（`.env.example` をコピーして作成）または環境変数で上書きできる。既定はすべて `crowdodge`。
+- **注意**: `.env` は compose が読み込んで DB コンテナに注入する。**ホスト起動するアプリ（`:app:run`）は `.env` を自動では読まない**ため、既定値から変えた場合はアプリ側にも渡すこと（例: `set -a; source .env; set +a`）。
+- リセット（baseline 変更時など Flyway チェックサム不一致の解消）: `docker compose down -v` で volume を破棄してから再起動・再マイグレーションする。
+
 ### Lint / 整形（detekt）
 
 静的解析と整形は detekt（`detekt-formatting` で ktlint ルールを内包）に一元化している。

@@ -1,0 +1,31 @@
+# 開発用 DB コンテナ（PostgreSQL + PostGIS）。
+# 開発専用。本番/共有環境では使用せず、認証情報は env / シークレットで注入すること。
+#
+# 接続情報はアプリ(application.conf)と同じ DB_* 一系統で扱い、
+# ここで PostgreSQL イメージが要求する固定名 POSTGRES_* へマッピングする。
+# 既定値は application.conf と同じ crowdodge。.env / env で上書きできる。
+#
+# 注意: .env は compose が読んで DB コンテナに注入するが、ホスト起動するアプリ
+#       (./gradlew :app:run) は .env を読まない。既定のままなら両者一致で動く。
+services:
+  db:
+    image: imresamu/postgis:18-3.6
+    environment:
+      POSTGRES_DB: ${DB_NAME:-crowdodge}
+      POSTGRES_USER: ${DB_USER:-crowdodge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-crowdodge}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    # PostgreSQL 18+ はデータを /var/lib/postgresql 配下のバージョン別サブディレクトリに置く。
+    # 旧来の /var/lib/postgresql/data ではなく /var/lib/postgresql をマウントする。
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-crowdodge} -d ${DB_NAME:-crowdodge}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+volumes:
+  pgdata:
