@@ -6,6 +6,8 @@ on:
       - "server/**"
       - ".github/**"
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   # 静的解析＋整形。detekt がゲート（違反でジョブを fail）、reviewdog は PR 該当行へ指摘を出す。
