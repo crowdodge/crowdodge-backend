@@ -40,6 +40,18 @@ cd server
 ./gradlew :app:run
 ```
 
+### Lint / 整形（detekt）
+
+静的解析と整形は detekt（`detekt-formatting` で ktlint ルールを内包）に一元化している。
+リポジトリルートで go-task から実行できる（素の Gradle でも可）。
+
+```bash
+task detekt   # 静的解析＋整形チェック（= cd server && ./gradlew detekt）
+task format   # 整形を自動修正（= ./gradlew detekt --auto-correct）
+```
+
+レポートは SARIF のみ出力し、各モジュール分を `server/build/reports/detekt/merged.sarif` に統合する。
+
 ### DB 接続設定
 
 `server/app/src/main/resources/application.conf` の既定値を環境変数で上書きできる。

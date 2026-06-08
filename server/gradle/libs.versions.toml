@@ -18,6 +18,7 @@ junitPlatform = "1.13.4"
 mockk = "1.14.5"
 testcontainers = "1.21.3"
 konsist = "0.17.3"
+detekt = "1.23.8"
 
 [libraries]
 # Arrow（エラーハンドリング §10）
@@ -67,8 +68,11 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 testcontainers-postgresql = { module = "org.testcontainers:postgresql", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:junit-jupiter", version.ref = "testcontainers" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
+# detekt 整形ルールセット（ktlint 内包）。プラグイン版と version.ref を共有して必ず一致させる
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

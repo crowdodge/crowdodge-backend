@@ -1,0 +1,7 @@
+# detekt 設定。buildUponDefaultConfig = true 前提で、既定ルールセットからの差分のみ記述する。
+# 整形（detekt-formatting / ktlint 内包）を有効化する。
+
+formatting:
+  active: true
+  android: false
+  autoCorrect: true

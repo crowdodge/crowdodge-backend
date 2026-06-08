@@ -9,6 +9,9 @@ import io.ktor.server.plugins.calllogging.CallLogging
 import org.slf4j.event.Level
 import java.util.UUID
 
+/** クライアント提供 callId の最大長（ログ MDC に載るため上限を設ける）。 */
+private const val MAX_CALL_ID_LENGTH = 128
+
 /**
  * 構造化ログ + リクエストID/UserId の MDC（§13）。
  * リクエストごとに callId を採番し MDC に載せる。
@@ -18,7 +21,9 @@ fun Application.configureMonitoring() {
         header(HttpHeaders.XRequestId)
         generate { UUID.randomUUID().toString() }
         // クライアント提供の callId はログ(MDC)に載るため、英数とハイフンに制限（ログインジェクション対策）。
-        verify { id -> id.isNotEmpty() && id.length <= 128 && id.all { it.isLetterOrDigit() || it == '-' } }
+        verify { id ->
+            id.isNotEmpty() && id.length <= MAX_CALL_ID_LENGTH && id.all { it.isLetterOrDigit() || it == '-' }
+        }
     }
     install(CallLogging) {
         level = Level.INFO

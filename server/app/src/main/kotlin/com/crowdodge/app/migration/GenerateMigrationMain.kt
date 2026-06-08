@@ -24,6 +24,9 @@ private val tables: Array<Table> = arrayOf(
 
 private const val MIGRATION_DIR = "src/main/resources/db/migration"
 
+// tables は静的な小配列で、Exposed のマイグレーション API が vararg のみを受けるため
+// spread は不可避。コピーのコストも無視できるため SpreadOperator を抑制する。
+@Suppress("SpreadOperator")
 @OptIn(org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi::class)
 fun main() {
     val log = LoggerFactory.getLogger("GenerateMigration")
@@ -44,9 +47,10 @@ fun main() {
             return@transaction
         }
         // 既存 V<番号>__*.sql の最大番号 +1 を採番する。
-        val next = (File(MIGRATION_DIR).listFiles().orEmpty()
+        val maxVersion = File(MIGRATION_DIR).listFiles().orEmpty()
             .mapNotNull { Regex("""^V(\d+)__""").find(it.name)?.groupValues?.get(1)?.toInt() }
-            .maxOrNull() ?: 0) + 1
+            .maxOrNull() ?: 0
+        val next = maxVersion + 1
         val files = MigrationUtils.generateMigrationScript(
             *tables,
             scriptDirectory = MIGRATION_DIR,
