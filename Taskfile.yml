@@ -22,7 +22,7 @@ tasks:
       - ./gradlew assemble
 
   ci:
-    desc: CI と同じチェックをローカルで実行（lint + build を 1 回の Gradle 呼び出しで）
+    desc: CI と同じチェックをローカルで実行（lint + test + build を 1 回の Gradle 呼び出しで）
     dir: server
     cmds:
-      - ./gradlew detekt assemble
+      - ./gradlew detekt assemble test

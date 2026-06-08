@@ -5,8 +5,17 @@ on:
     paths:
       - "server/**"
       - ".github/**"
+  # develop への push でも実行し、マージ後の develop を検査する。
+  # 併せて Gradle キャッシュは既定ブランチ(develop)でのみ書き込まれるため、PR ジョブのキャッシュ元にもなる。
+  push:
+    branches: [develop]
+    paths:
+      - "server/**"
+      - ".github/**"
 
 env:
+  # node20 ランタイム廃止に備え、node20 を宣言する JS アクションを node24 で実行させる移行フラグ。
+  # 利用アクションが node24 対応に追従したら削除可。
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
@@ -26,21 +35,27 @@ jobs:
         run: ./gradlew detekt
 
       # PR のときだけ該当行にインラインコメント（GHAS 不要。GITHUB_TOKEN のみ）。
-      # detekt が落ちてもコメントを出す。ゲート自体は上の detekt ステップが担う。
+      # detekt が落ちてもコメントを出すため success()||failure()。github-pr-review は PR 前提のため
+      # pull_request イベントに限定する（push では reviewdog を走らせない）。
       - name: Setup reviewdog
-        if: ${{ success() || failure() }}
+        if: ${{ (success() || failure()) && github.event_name == 'pull_request' }}
         uses: reviewdog/action-setup@v1
 
       - name: Report detekt to PR
-        if: ${{ success() || failure() }}
+        if: ${{ (success() || failure()) && github.event_name == 'pull_request' }}
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         # SARIF のパス解決はリポジトリ構成（server/ サブディレクトリ）に依存するため、初回 CI で要確認。
+        # setup 失敗等でレポート未生成のときは bash -e でのリダイレクト失敗を避けるためガードする。
         run: |
-          reviewdog -f=sarif -name=detekt \
-            -reporter=github-pr-review \
-            -filter-mode=added \
-            < server/build/reports/detekt/merged.sarif
+          if [ -f server/build/reports/detekt/merged.sarif ]; then
+            reviewdog -f=sarif -name=detekt \
+              -reporter=github-pr-review \
+              -filter-mode=added \
+              < server/build/reports/detekt/merged.sarif
+          else
+            echo "merged.sarif が無いため reviewdog をスキップします"
+          fi
 
   # 最小限のユニットテスト
   test:
@@ -49,7 +64,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-gradle
 
-      # 過去のキャッシュ（UP-TO-DATE）を最大限活かし、変更があったテストだけを実行
+      # 既存の konsist（アーキテクチャ検査）＋ kernel ユニットテストを実行する。
+      # CI はクリーンランナーのため毎回フルでコンパイル・テストする（依存は Gradle キャッシュで短縮）。
       - name: test
         working-directory: server
         run: ./gradlew test
