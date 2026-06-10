@@ -28,7 +28,7 @@
 | マイグレーション | **Flyway**（JDBC接続で起動時実行） | Flyway は R2DBC 非対応のため JDBC ドライバを併用 |
 | DI | **Koin** | BCごとに module 定義、`app` が束ねる |
 | エラーハンドリング | **Arrow** (arrow-core) | 内部=`Raise`／境界=`Either`（§10） |
-| テスト | **JUnit5 + MockK** + **Testcontainers** | infra は実 PostgreSQL で結合 |
+| テスト | **Kotest（runner-junit5）+ MockK** + **Testcontainers**（`kotest-extensions-testcontainers`） | JUnit Platform 上で実行。infra は実 PostgreSQL で結合。spec スタイルは指定なし（自由） |
 | JSON | **kotlinx.serialization** | Ktor 公式統合 |
 | HTTP クライアント | **Ktor Client** | GCal / Gemini 連携 |
 | 通知配信 | **FCM**（Firebase Cloud Messaging） | プッシュ通知。`user_devices.fcm_token` |
@@ -318,7 +318,7 @@ class ExposedEventRepository(private val db: R2dbcDatabase) : EventRepository {
 - 依存方向の自動検査（Konsist/ArchUnit）。
 - 認証: Google OAuth → 自前 JWT/セッション。`UserId` をコンテキスト注入。
 - 設定: `application.conf`(HOCON) + 環境変数。Google/Gemini/FCM/RevenueCat のシークレットは env。
-- テスト: domain=純ユニット / application=MockKでポートをモック / infrastructure=Testcontainers（`exposed-r2dbc` の挙動差も早期検証）。`Either` は `isRight()`/`isLeft()` 分岐確認。
+- テスト: **Kotest**（`io.kotest` 群で統一。runner-junit5 / assertions-core / assertions-arrow / property / extensions-testcontainers）。domain=純ユニット（`kotest-property` で VO/不変条件） / application=MockK でポートをモック / infrastructure=Testcontainers（`kotest-extensions-testcontainers`。`exposed-r2dbc` の挙動差も早期検証）。`Either` は `kotest-assertions-arrow` の `shouldBeRight()`/`shouldBeLeft()` で検証。spec スタイルは指定なし（自由）。
 - ロギング: 構造化ログ + リクエストID/UserId の MDC。
 
 ---
