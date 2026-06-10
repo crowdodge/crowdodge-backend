@@ -17,6 +17,9 @@ dependencies {
     implementation(libs.r2dbc.spi)
     runtimeOnly(libs.r2dbc.postgresql)
 
+    // readiness の SELECT 1 にタイムアウトを掛けるため明示依存（exposed-r2dbc 経由でも入るが明示する）
+    implementation(libs.kotlinx.coroutines.core)
+
     // Problem(RFC9457) を Ktor 応答に載せるため最小の ktor-server-core を参照（§3 shared/infra）
     implementation(libs.ktor.server.core)
     implementation(libs.kotlinx.serialization.json)
@@ -25,6 +28,10 @@ dependencies {
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
+    // readiness の DB ping を実 PostgreSQL で結合検証（§13 infrastructure）
+    testImplementation(libs.kotest.extensions.testcontainers)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.postgresql) // PostgreSQLContainer の JDBC ベース起動待ち用
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
