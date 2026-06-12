@@ -5,7 +5,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.extensions.testcontainers.TestContainerSpecExtension
 import io.kotest.matchers.shouldBe
 import org.testcontainers.DockerClientFactory
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 import org.testcontainers.utility.DockerImageName
 import kotlin.time.Duration.Companion.seconds
 
