@@ -3,7 +3,7 @@ package com.crowdodge.shared.kernel
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import java.time.Instant
+import kotlin.time.Instant
 
 class TimeRangeTest : FunSpec({
     val t0 = Instant.parse("2026-06-03T10:00:00Z")

@@ -29,12 +29,15 @@ description: crowdodge が採用するライブラリ(Ktor / Exposed R2DBC / Arr
 1. **toml でバージョン確定** → そのバージョンの公式ドキュメント/リリースノート/API リファレンスを当たる。
 2. **WebSearch / WebFetch で一次情報を取る** — 公式 docs・GitHub の該当タグ・KDoc を優先。Stack Overflow やブログは**バージョンを確認**してから採用(古い記事が多い)。
 3. **バージョン整合をチェック** — その API が固定バージョンに存在するか、シグネチャは合っているか、非推奨でないか。R2DBC 版か JDBC 版かを必ず区別する。
-4. **このプロジェクトの規約に当てはめる** — 例えば「application は Ktor/Exposed を import しない」(architecture.md §4)ので、調べた API がどの層に置けるかも併せて答える。
-5. **最小実行例を示す** — このコードベースの書き方(`suspendTransaction`、`either { }`、Koin module、Problem Details)に寄せたスニペットで。出典 URL とバージョンを明記。
+4. **最新版かどうかを確認** — Maven Central の `maven-metadata.xml`(例: `curl -s https://repo1.maven.org/maven2/<group/path>/maven-metadata.xml`)等で最新の **stable** を確認する。alpha/beta/RC/-M/-SNAPSHOT/-compat 等のプレリリースは除く。
+   - **新規追加・選定時**: alpha/RC を除く最新の安定版を採用する(ユーザー方針)。
+   - **既存依存**: toml の固定版が最新から大きく遅れている、または採用 API が新版で非推奨/改名されている場合は、その事実と新版での書き方を併記する(勝手に総入れ替えはしない。指摘に留める)。
+5. **このプロジェクトの規約に当てはめる** — 例えば「application は Ktor/Exposed を import しない」(architecture.md §4)ので、調べた API がどの層に置けるかも併せて答える。
+6. **最小実行例を示す** — このコードベースの書き方(`suspendTransaction`、`either { }`、Koin module、Problem Details)に寄せたスニペットで。出典 URL とバージョンを明記。
 
 ## 出力に必ず含める
 
-- 対象ライブラリと **バージョン**(toml の値)。
+- 対象ライブラリと **バージョン**(toml の値)、および **最新 stable 版**(遅れていれば明示)。
 - 結論(その API/書き方が正しいか、推奨形)。
 - 最小サンプルコード(本プロジェクトの規約に沿う)。
 - 出典(公式 URL)。不確実な点は「要検証」と明示。

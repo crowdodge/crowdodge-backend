@@ -13,6 +13,8 @@ dependencies {
     // R2DBC + Exposed（永続化基盤 §12）
     api(libs.exposed.core)
     api(libs.exposed.r2dbc)
+    // timestamp 列を kotlinx.datetime.Instant にマップ（§5.1）。TimestampedTable の xTimestamp が依存
+    api(libs.exposed.kotlin.datetime)
     implementation(libs.r2dbc.pool)
     implementation(libs.r2dbc.spi)
     runtimeOnly(libs.r2dbc.postgresql)
