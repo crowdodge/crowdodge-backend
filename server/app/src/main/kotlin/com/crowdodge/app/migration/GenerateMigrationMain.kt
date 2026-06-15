@@ -1,5 +1,9 @@
 package com.crowdodge.app.migration
 
+import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
+import com.crowdodge.user.infrastructure.persistence.UserSettingsTable
+import com.crowdodge.user.infrastructure.persistence.UserSubscriptionsTable
+import com.crowdodge.user.infrastructure.persistence.UsersTable
 import org.jetbrains.exposed.v1.core.Table
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -20,6 +24,10 @@ import java.io.File
  */
 private val tables: Array<Table> = arrayOf(
     // 例: UsersTable, EventTable, ...（各 BC の infrastructure/persistence で定義）
+    UsersTable,
+    UserSettingsTable,
+    UserCalendarsTable,
+    UserSubscriptionsTable
 )
 
 private const val MIGRATION_DIR = "src/main/resources/db/migration"
