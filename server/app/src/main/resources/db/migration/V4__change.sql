@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS user_devices (created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, device_uuid uuid PRIMARY KEY, user_uuid uuid NOT NULL, fcm_token TEXT NOT NULL, CONSTRAINT fk_user_devices_user_uuid__user_uuid FOREIGN KEY (user_uuid) REFERENCES users(user_uuid) ON DELETE RESTRICT ON UPDATE RESTRICT);
