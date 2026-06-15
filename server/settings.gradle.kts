@@ -23,4 +23,5 @@ include(
     ":shared:infra",
     ":konsist",
     ":contexts:user",
+    ":contexts:event"
 )
