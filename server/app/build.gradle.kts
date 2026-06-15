@@ -18,6 +18,7 @@ dependencies {
     implementation(projects.shared.kernel)
     implementation(projects.shared.infra)
     implementation(projects.contexts.user)
+    implementation(projects.contexts.event)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)
