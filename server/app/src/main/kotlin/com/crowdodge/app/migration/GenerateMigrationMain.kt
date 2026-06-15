@@ -3,6 +3,7 @@ package com.crowdodge.app.migration
 import com.crowdodge.event.infrastructure.persistence.EventCalendarSyncsTable
 import com.crowdodge.event.infrastructure.persistence.EventsTable
 import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
+import com.crowdodge.user.infrastructure.persistence.UserDevicesTable
 import com.crowdodge.user.infrastructure.persistence.UserSettingsTable
 import com.crowdodge.user.infrastructure.persistence.UserSubscriptionsTable
 import com.crowdodge.user.infrastructure.persistence.UsersTable
@@ -30,6 +31,7 @@ private val tables: Array<Table> = arrayOf(
     UserSettingsTable,
     UserCalendarsTable,
     UserSubscriptionsTable,
+    UserDevicesTable,
     EventsTable,
     EventCalendarSyncsTable
 )
