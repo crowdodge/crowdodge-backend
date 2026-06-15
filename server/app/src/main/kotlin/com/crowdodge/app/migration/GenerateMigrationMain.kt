@@ -49,6 +49,14 @@ fun main() {
         return
     }
     val config = loadDatabaseConfig()
+
+    val pending = FlywayMigrator.pending(config).isNotEmpty()
+    if (pending) {
+        println("未適用のマイグレーションがります。")
+        println("重複生成を防ぐため、先にDBへ適用(migrate)してください。")
+        return
+    }
+
     val db = Database.connect(
         url = jdbcUrl(config),
         driver = "org.postgresql.Driver",
