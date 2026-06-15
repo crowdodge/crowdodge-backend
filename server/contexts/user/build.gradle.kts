@@ -11,6 +11,9 @@ dependencies {
     // presentation/application/domain → shared:kernel（§4 の依存ルール）。
     // infrastructure 着手時に shared:infra / ktor / exposed を追加する。
     implementation(projects.shared.kernel)
+    implementation(projects.shared.infra)
+    implementation(libs.exposed.core)
+    implementation(libs.exposed.kotlin.datetime)
 
     // presentation 層の DTO は kotlinx.serialization（§1）。
     implementation(libs.kotlinx.serialization.json)
