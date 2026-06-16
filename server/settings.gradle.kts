@@ -23,5 +23,6 @@ include(
     ":shared:infra",
     ":konsist",
     ":contexts:user",
-    ":contexts:event"
+    ":contexts:event",
+    ":contexts:destination",
 )
