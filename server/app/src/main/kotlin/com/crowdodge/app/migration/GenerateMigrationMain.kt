@@ -8,6 +8,7 @@ import com.crowdodge.event.infrastructure.persistence.EventsTable
 import com.crowdodge.infrastrcuture.persistence.NotificationSchedulesTable
 import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
 import com.crowdodge.user.infrastructure.persistence.UserDevicesTable
+import com.crowdodge.user.infrastructure.persistence.UserItemsTable
 import com.crowdodge.user.infrastructure.persistence.UserSettingsTable
 import com.crowdodge.user.infrastructure.persistence.UserSubscriptionsTable
 import com.crowdodge.user.infrastructure.persistence.UsersTable
@@ -34,6 +35,7 @@ private val tables: Array<Table> = arrayOf(
     UsersTable,
     UserSettingsTable,
     UserCalendarsTable,
+    UserItemsTable,
     UserSubscriptionsTable,
     UserDevicesTable,
     EventsTable,

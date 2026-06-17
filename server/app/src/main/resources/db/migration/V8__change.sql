@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS user_items (created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, user_item_id_uuid uuid NOT NULL, user_uuid uuid NOT NULL, item_type TEXT NOT NULL, item_count INT NOT NULL, CONSTRAINT fk_user_items_user_uuid__user_uuid FOREIGN KEY (user_uuid) REFERENCES users(user_uuid) ON DELETE RESTRICT ON UPDATE RESTRICT);
+ALTER TABLE user_items ADD CONSTRAINT user_items_user_uuid_item_type_unique UNIQUE (user_uuid, item_type);
