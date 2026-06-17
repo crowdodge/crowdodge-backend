@@ -1,0 +1,1 @@
+CREATE TABLE IF NOT EXISTS notification_schedules (created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, notification_schedules_uuid uuid PRIMARY KEY, user_uuid uuid NOT NULL, event_uuid uuid NOT NULL, kind TEXT NOT NULL, status TEXT NOT NULL);
