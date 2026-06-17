@@ -26,5 +26,5 @@ include(
     ":contexts:event",
     ":contexts:destination",
     ":contexts:congestion",
+    "contexts:notification",
 )
-
