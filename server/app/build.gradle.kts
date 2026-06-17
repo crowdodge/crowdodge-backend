@@ -20,6 +20,7 @@ dependencies {
     implementation(projects.contexts.user)
     implementation(projects.contexts.event)
     implementation(projects.contexts.destination)
+    implementation(projects.contexts.congestion)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)
