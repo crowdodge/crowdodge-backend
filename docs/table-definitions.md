@@ -10,18 +10,19 @@
 ## テーブル一覧
 
 | No. | テーブル名 | 概要 |
-|---|---|---|
-| 1 | users | ユーザーのアカウント基本情報 |
-| 2 | user_settings | ユーザーのリマインドタイミング等の設定 |
-| 3 | user_calendars | ユーザーが混雑回避の対象に選択した Google カレンダー |
-| 4 | event_calendar_syncs | Google カレンダー取り込みの同期・watch 状態（user_calendars と 1:1） |
-| 5 | user_subscriptions | サブスクリプション登録状況（RevenueCat 参照） |
-| 6 | user_devices | 通知対象デバイスの識別子（FCM）管理 |
-| 7 | events | 個別の予定（Google カレンダーの投影） |
-| 8 | event_destinations | 予定の目的地・ルート情報（シリーズ単位で共有） |
-| 9 | event_destination_links | 予定と目的地グループのメンバーシップ |
-| 10 | event_congestion_predictions | 予定の混雑予測 |
-| 11 | notification_schedules | 通知タイミングの管理（サーバ常時監視） |
+|-----|---|---|
+| 1   | users | ユーザーのアカウント基本情報 |
+| 2   | user_settings | ユーザーのリマインドタイミング等の設定 |
+| 3   | user_calendars | ユーザーが混雑回避の対象に選択した Google カレンダー |
+| 4   | user_items | ユーザーの各アイテムごとの所持数管理 |
+| 5   | user_subscriptions | サブスクリプション登録状況（RevenueCat 参照） |
+| 6   | user_devices | 通知対象デバイスの識別子（FCM）管理 |
+| 7   | events | 個別の予定（Google カレンダーの投影） |
+| 8   | event_calendar_syncs | Google カレンダー取り込みの同期・watch 状態（user_calendars と 1:1） |
+| 9   | event_destinations | 予定の目的地・ルート情報（シリーズ単位で共有） |
+| 10  | event_destination_links | 予定と目的地グループのメンバーシップ |
+| 11  | event_congestion_predictions | 予定の混雑予測 |
+| 12  | notification_schedules | 通知タイミングの管理（サーバ常時監視） |
 
 ---
 
@@ -59,22 +60,18 @@
 
 - `UNIQUE(user_uuid, google_calendar_id)`: 同一ユーザーが同一カレンダーを重複登録しない。1ユーザー複数カレンダー・共有カレンダーの複数ユーザー登録はいずれも許容する。
 
-## 4. event_calendar_syncs — カレンダー同期・watch 状態
+## 4. user_items — アイテム所持数
 
-Google カレンダーを `events` 投影へ取り込むための同期・watch 状態。`user_calendars` と 1:1。
+| 列(物理) | データ型 | PK | NOT NULL | 参照 | 備考        |
+|---|---|---|----|---|-----------|
+| user_item_uuid | uuid | ⚫︎ | ⚫︎ | |           |
+| user_uuid | uuid | | ⚫︎ | users.user_uuid |           |
+| item_type | text | | ⚫︎ | | アイテムごとに固有 |
+| quantity | integer | | ⚫︎ | | 所持数 |
+| created_at | timestamp | | ● | | |
+| updated_at | timestamp | | ● | | |
 
-| 列(物理) | データ型 | PK | NOT NULL | 一意 | 参照 | 備考 |
-|---|---|---|---|---|---|---|
-| user_calendar_uuid | uuid | ● | ● | | user_calendars.user_calendar_uuid | 由来カレンダー（下流→上流参照） |
-| materialized_until | timestamptz | | | | | ローリング窓で実体化済みの将来端（不在削除の境界） |
-| watch_channel_id | text | | | ● | | Google Push チャンネルID（webhook ルーティング） |
-| watch_resource_id | text | | | | | watch 対象リソースID（channels.stop に使用） |
-| watch_channel_token | text | | | | | webhook 検証トークン（X-Goog-Channel-Token の照合用） |
-| watch_expiration | timestamptz | | | | | watch チャンネル失効時刻（renew sweep 用・index） |
-| created_at | timestamp | | ● | | | |
-| updated_at | timestamp | | ● | | | |
-
-- `watch_expiration` に index（renew 抽出用）。
+- `UNIQUE(user_uuid, item_type)`: 同一ユーザーが同一アイテムの所持数を重複登録しないため。
 
 ## 5. user_subscriptions — サブスクリプション
 
@@ -121,7 +118,24 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | created_at | timestamp | | ● | | | |
 | updated_at | timestamp | | ● | | | |
 
-## 8. event_destinations — 目的地・ルート情報
+## 8. event_calendar_syncs — カレンダー同期・watch 状態
+
+Google カレンダーを `events` 投影へ取り込むための同期・watch 状態。`user_calendars` と 1:1。
+
+| 列(物理) | データ型 | PK | NOT NULL | 一意 | 参照 | 備考 |
+|---|---|---|---|---|---|---|
+| user_calendar_uuid | uuid | ● | ● | | user_calendars.user_calendar_uuid | 由来カレンダー（下流→上流参照） |
+| materialized_until | timestamptz | | | | | ローリング窓で実体化済みの将来端（不在削除の境界） |
+| watch_channel_id | text | | | ● | | Google Push チャンネルID（webhook ルーティング） |
+| watch_resource_id | text | | | | | watch 対象リソースID（channels.stop に使用） |
+| watch_channel_token | text | | | | | webhook 検証トークン（X-Goog-Channel-Token の照合用） |
+| watch_expiration | timestamptz | | | | | watch チャンネル失効時刻（renew sweep 用・index） |
+| created_at | timestamp | | ● | | | |
+| updated_at | timestamp | | ● | | | |
+
+- `watch_expiration` に index（renew 抽出用）。
+
+## 9. event_destinations — 目的地・ルート情報
 
 目的地は場所に紐づき日付に依存しない。同一シリーズの全発生回で1グループを共有する（`recurring_event_id` を相関ヒントとして重複を防ぐ）。
 
@@ -136,7 +150,7 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | created_at | timestamp | | ● | | |
 | updated_at | timestamp | | ● | | |
 
-## 9. event_destination_links — 予定↔目的地グループ
+## 10. event_destination_links — 予定↔目的地グループ
 
 | 列(物理) | データ型 | PK | NOT NULL | 参照 | 備考 |
 |---|---|---|---|---|---|
@@ -144,7 +158,7 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | event_destination_uuid | uuid | | ● | event_destinations.event_destination_uuid | 所属グループ |
 | created_at | timestamp | | ● | | |
 
-## 10. event_congestion_predictions — 混雑予測
+## 11. event_congestion_predictions — 混雑予測
 
 1予定につき1行（再予測は上書き）。
 
@@ -158,7 +172,7 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | created_at | timestamp | | ● | | | |
 | updated_at | timestamp | | ● | | | |
 
-## 11. notification_schedules — 通知スケジュール
+## 12. notification_schedules — 通知スケジュール
 
 通知ジョブのキュー。サーバが常時ポーリングし、`notificate_time` 到来分を発火する。
 
