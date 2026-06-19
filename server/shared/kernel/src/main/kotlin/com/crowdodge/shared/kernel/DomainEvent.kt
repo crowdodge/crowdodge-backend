@@ -1,6 +1,6 @@
 package com.crowdodge.shared.kernel
 
-import java.time.Instant
+import kotlin.time.Instant
 
 /**
  * 全ドメインイベントの基底（§5 命名の約束）。
