@@ -16,6 +16,12 @@ sealed interface UserError : DomainError {
             override val code: String = "blank-email"
         }
 
+        /** メールアドレスが基本形式（`@` を1つ含み local/domain が非空）でない。 */
+        data object InvalidEmail : ValidationError {
+            override val name: String = "email"
+            override val code: String = "invalid-email"
+        }
+
         /** Google ID が空。 */
         data object BlankGoogleId : ValidationError {
             override val name: String = "google_id"
