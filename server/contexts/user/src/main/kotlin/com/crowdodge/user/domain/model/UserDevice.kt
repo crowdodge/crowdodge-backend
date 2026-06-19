@@ -23,8 +23,9 @@ value class UserDeviceId(override val value: Uuid) : EntityId {
 value class FcmToken private constructor(val value: String) {
     companion object {
         fun Raise<UserError.ValidationError>.fcmToken(value: String): FcmToken {
-            ensure(value.isNotBlank()) { UserError.ValidationError.BlankFcmToken }
-            return FcmToken(value)
+            val trimmed = value.trim()
+            ensure(trimmed.isNotBlank()) { UserError.ValidationError.BlankFcmToken }
+            return FcmToken(trimmed)
         }
     }
 }

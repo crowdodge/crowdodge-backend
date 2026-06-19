@@ -23,8 +23,9 @@ value class UserCalendarId(override val value: Uuid) : EntityId {
 value class GoogleCalendarId private constructor(val value: String) {
     companion object {
         fun Raise<UserError.ValidationError>.googleCalendarId(value: String): GoogleCalendarId {
-            ensure(value.isNotBlank()) { UserError.ValidationError.BlankGoogleCalendarId }
-            return GoogleCalendarId(value)
+            val trimmed = value.trim()
+            ensure(trimmed.isNotBlank()) { UserError.ValidationError.BlankGoogleCalendarId }
+            return GoogleCalendarId(trimmed)
         }
     }
 }
