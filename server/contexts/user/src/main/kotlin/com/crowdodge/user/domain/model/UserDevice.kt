@@ -2,16 +2,16 @@ package com.crowdodge.user.domain.model
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
-import com.crowdodge.shared.kernel.EntityId
-import com.crowdodge.shared.kernel.UserId
+import com.crowdodge.shared.kernel.EntityUuid
+import com.crowdodge.shared.kernel.UserUuid
 import com.crowdodge.user.domain.error.UserError
 import kotlin.uuid.Uuid
 
 /** 通知デバイス識別子（user_devices.device_uuid）。 */
 @JvmInline
-value class UserDeviceId(override val value: Uuid) : EntityId {
+value class UserDeviceUuid(override val value: Uuid) : EntityUuid {
     companion object {
-        fun new(): UserDeviceId = UserDeviceId(Uuid.random())
+        fun new(): UserDeviceUuid = UserDeviceUuid(Uuid.random())
     }
 }
 
@@ -31,23 +31,23 @@ value class FcmToken private constructor(val value: String) {
 }
 
 /**
- * 通知対象デバイス（user_devices）。独立集約。所有者は [userId] を値参照する。
+ * 通知対象デバイス（user_devices）。独立集約。所有者は [userUuid] を値参照する。
  */
 class UserDevice private constructor(
-    val id: UserDeviceId,
-    val userId: UserId,
+    val userDeviceUuid: UserDeviceUuid,
+    val userUuid: UserUuid,
     val fcmToken: FcmToken,
 ) {
     companion object {
-        /** 新規登録（新しい [UserDeviceId] を採番）。 */
-        fun register(userId: UserId, fcmToken: FcmToken): UserDevice =
-            UserDevice(UserDeviceId.new(), userId, fcmToken)
+        /** 新規登録（新しい [UserDeviceUuid] を採番）。 */
+        fun register(userUuid: UserUuid, fcmToken: FcmToken): UserDevice =
+            UserDevice(UserDeviceUuid.new(), userUuid, fcmToken)
 
         /** 永続化済みの状態から再構築する（リポジトリ用）。 */
         fun reconstitute(
-            id: UserDeviceId,
-            userId: UserId,
+            userDeviceUuid: UserDeviceUuid,
+            userUuid: UserUuid,
             fcmToken: FcmToken,
-        ): UserDevice = UserDevice(id, userId, fcmToken)
+        ): UserDevice = UserDevice(userDeviceUuid, userUuid, fcmToken)
     }
 }
