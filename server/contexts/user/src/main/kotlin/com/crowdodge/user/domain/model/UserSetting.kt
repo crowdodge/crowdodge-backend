@@ -3,7 +3,7 @@ package com.crowdodge.user.domain.model
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
 import com.crowdodge.shared.kernel.Location
-import com.crowdodge.shared.kernel.UserId
+import com.crowdodge.shared.kernel.UserUuid
 import com.crowdodge.user.domain.error.UserError
 import kotlin.time.Duration
 
@@ -33,7 +33,7 @@ fun Raise<UserError.ValidationError>.home(longitude: Double, latitude: Double): 
 
 @ConsistentCopyVisibility
 data class UserSetting private constructor(
-    val userId: UserId,
+    val userUuid: UserUuid,
     val home: Location,
     val remindTiming: RemindTiming,
 ) {
@@ -43,11 +43,11 @@ data class UserSetting private constructor(
 
     companion object {
         /** 新規登録 */
-        fun configure(userId: UserId, home: Location, remindTiming: RemindTiming): UserSetting =
-            UserSetting(userId, home, remindTiming)
+        fun configure(userUuid: UserUuid, home: Location, remindTiming: RemindTiming): UserSetting =
+            UserSetting(userUuid, home, remindTiming)
 
         /** 永続化済みの状態から再構築する（リポジトリ用）。 */
-        fun reconstitute(userId: UserId, home: Location, remindTiming: RemindTiming): UserSetting =
-            UserSetting(userId, home, remindTiming)
+        fun reconstitute(userUuid: UserUuid, home: Location, remindTiming: RemindTiming): UserSetting =
+            UserSetting(userUuid, home, remindTiming)
     }
 }
