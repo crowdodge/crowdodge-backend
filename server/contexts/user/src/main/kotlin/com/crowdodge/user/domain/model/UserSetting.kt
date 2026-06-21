@@ -23,9 +23,7 @@ value class RemindTiming private constructor(val duration: Duration) {
 }
 
 /**
- * Homeの生成関数。
- * KernelのLocationを扱う。
- * 生成は [Location]
+ * 自宅座標 [Location] を外部入力から生成する。範囲外は [UserError.ValidationError.InvalidHomeLocation] を `raise`。
  */
 fun Raise<UserError.ValidationError>.home(longitude: Double, latitude: Double): Location {
     return Location.ofOrNull(longitude, latitude) ?: raise(UserError.ValidationError.InvalidHomeLocation)

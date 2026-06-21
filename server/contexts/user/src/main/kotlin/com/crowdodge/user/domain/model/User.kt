@@ -15,10 +15,9 @@ import com.crowdodge.user.domain.model.GoogleId.Companion.googleId
 @JvmInline
 value class Email private constructor(val value: String) {
     companion object {
-        // 文字列の前に $$ をつけることで、ドルマーク2つ（$$）の時だけ変数展開するルールになります
-        // これにより、1つの $ はそのまま文字として扱えるようになります
+        // HTML5 `<input type="email">` 相当のメール形式。raw string 内の `$` は非識別子が続くため文字どおり扱われる。
         @Suppress("MaximumLineLength", "MaxLineLength")
-        val regex = Regex(
+        private val regex = Regex(
             """^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"""
         )
 
@@ -51,8 +50,8 @@ value class GoogleId private constructor(val value: String) {
 }
 
 /**
- * ユーザー集約ルート（users）。identity（[googleId]/[email]）と [UserSettings]（1:1）を内包する。
- * カレンダー選択・デバイスは別集約（[UserCalendar]/[UserDevice]）で、[UserUuid] を値参照する。
+ * ユーザー集約ルート（users）。identity（[googleId]/[email]）のみを保持する。
+ * 設定・カレンダー選択・デバイスは別集約（[UserSetting]/[UserCalendar]/[UserDevice]）で、[UserUuid] を値参照する。
  */
 class User private constructor(
     val userUuid: UserUuid,
