@@ -1,11 +1,5 @@
 package com.crowdodge.app.migration
 
-import com.crowdodge.congestion.infrastructure.persistence.EventCongestionsTable
-import com.crowdodge.distination.infrastructure.persistence.EventDestinationLinksTable
-import com.crowdodge.distination.infrastructure.persistence.EventDestinationsTable
-import com.crowdodge.event.infrastructure.persistence.EventCalendarSyncsTable
-import com.crowdodge.event.infrastructure.persistence.EventsTable
-import com.crowdodge.infrastrcuture.persistence.NotificationSchedulesTable
 import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
 import com.crowdodge.user.infrastructure.persistence.UserDevicesTable
 import com.crowdodge.user.infrastructure.persistence.UserItemsTable
@@ -38,12 +32,12 @@ private val tables: Array<Table> = arrayOf(
     UserItemsTable,
     UserSubscriptionsTable,
     UserDevicesTable,
-    EventsTable,
-    EventCalendarSyncsTable,
-    EventDestinationsTable,
-    EventDestinationLinksTable,
-    EventCongestionsTable,
-    NotificationSchedulesTable,
+//    EventsTable,
+//    EventCalendarSyncsTable,
+//    EventDestinationsTable,
+//    EventDestinationLinksTable,
+//    EventCongestionsTable,
+//    NotificationSchedulesTable,
 )
 
 private const val MIGRATION_DIR = "src/main/resources/db/migration"
