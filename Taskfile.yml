@@ -26,3 +26,40 @@ tasks:
     dir: server
     cmds:
       - ./gradlew detekt assemble test
+
+  migrate-create:
+    desc: 実DBとExposedのテーブル定義を比較し、差分のSQLファイルを生成する。
+    dir: server
+    cmds:
+      - ./gradlew generateMigration
+
+  migrate-up:
+    desc: Migrateファイルを適用する。
+    dir: server
+    cmds:
+      - ./gradlew flywayMigrate
+
+  db-drop:
+    desc: "【破壊的】開発DB(compose の db)の public 配下の全テーブルを削除する。実行後は task migrate-up で再作成。"
+    cmds:
+      - |
+        docker compose exec -T db psql -U "${DB_USER:-crowdodge}" -d "${DB_NAME:-crowdodge}" -v ON_ERROR_STOP=1 <<'SQL'
+        DO $$
+        DECLARE r RECORD;
+        BEGIN
+          FOR r IN
+            SELECT t.tablename
+            FROM pg_tables t
+            WHERE t.schemaname = 'public'
+              AND NOT EXISTS (
+                SELECT 1 FROM pg_depend d
+                JOIN pg_class c ON c.oid = d.objid
+                WHERE c.relname = t.tablename
+                  AND c.relnamespace = 'public'::regnamespace
+                  AND d.deptype = 'e'
+              )
+          LOOP
+            EXECUTE 'DROP TABLE IF EXISTS public.' || quote_ident(r.tablename) || ' CASCADE';
+          END LOOP;
+        END $$;
+        SQL
