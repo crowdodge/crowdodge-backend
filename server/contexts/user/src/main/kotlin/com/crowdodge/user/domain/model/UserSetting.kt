@@ -8,7 +8,7 @@ import com.crowdodge.user.domain.error.UserError
 import kotlin.time.Duration
 
 /**
- * リマインドタイミング VO（user_settings.remind_timing の `interval`）。
+ * リマインドタイミング VO（user_settings.remind_timing、bigint ナノ秒として永続化）。
  * 予定の何分前に通知するかの既定値。正の値のみ許す。
  * 生成は [remindTiming] のみ。
  */

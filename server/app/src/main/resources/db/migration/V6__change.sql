@@ -1,1 +1,0 @@
-CREATE TABLE IF NOT EXISTS event_congestions (created_at TIMESTAMP NOT NULL, updated_at TIMESTAMP NOT NULL, event_congestion_uuid uuid PRIMARY KEY, event_uuid uuid NOT NULL, congestion_start_time TIMESTAMP NOT NULL, congestion_end_time TIMESTAMP NOT NULL, description TEXT NOT NULL);
