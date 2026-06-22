@@ -18,6 +18,7 @@ dependencies {
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.kotest.assertions.arrow)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
