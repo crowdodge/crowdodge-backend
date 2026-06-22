@@ -1,8 +1,8 @@
 package com.crowdodge.user.domain.repository
 
-import com.crowdodge.shared.kernel.UserId
+import com.crowdodge.shared.kernel.UserUuid
 import com.crowdodge.user.domain.model.UserDevice
-import com.crowdodge.user.domain.model.UserDeviceId
+import com.crowdodge.user.domain.model.UserDeviceUuid
 
 /**
  * UserDevice 集約の永続化ポート。実装は infrastructure、トランザクション境界は application（§11）。
@@ -10,8 +10,9 @@ import com.crowdodge.user.domain.model.UserDeviceId
 interface UserDeviceRepository {
     suspend fun save(userDevice: UserDevice)
 
-    suspend fun delete(id: UserDeviceId)
+    /** 所有者スコープ付き削除（自分のデバイスのみ）。 */
+    suspend fun delete(userUuid: UserUuid, userDeviceUuid: UserDeviceUuid)
 
     /** 当該ユーザーの通知対象デバイス一覧（FCM 配信先）。 */
-    suspend fun findByUserId(userId: UserId): List<UserDevice>
+    suspend fun findByUserUuid(userUuid: UserUuid): List<UserDevice>
 }

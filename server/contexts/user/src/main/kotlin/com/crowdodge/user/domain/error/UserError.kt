@@ -52,4 +52,14 @@ sealed interface UserError : DomainError {
             override val code: String = "blank-fcm-token"
         }
     }
+    sealed interface ConflictError : UserError {
+        data object DuplicateEmail : ConflictError {
+            override val code: String = "duplicate-email"
+        }
+
+        /** 同一ユーザーが同一カレンダーを重複選択した（UNIQUE(user_uuid, google_calendar_id)）。 */
+        data object DuplicateCalendar : ConflictError {
+            override val code: String = "duplicate-calendar"
+        }
+    }
 }

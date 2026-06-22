@@ -24,10 +24,10 @@ import kotlin.time.Duration.Companion.nanoseconds
  */
 class ValueObjectTest : FunSpec({
 
-    context("EntityId") {
+    context("EntityUuid") {
         test("new() は毎回ユニークな id を採番する") {
-            UserCalendarId.new() shouldNotBe UserCalendarId.new()
-            UserDeviceId.new() shouldNotBe UserDeviceId.new()
+            UserCalendarUuid.new() shouldNotBe UserCalendarUuid.new()
+            UserDeviceUuid.new() shouldNotBe UserDeviceUuid.new()
         }
     }
 
