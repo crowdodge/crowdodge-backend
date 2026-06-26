@@ -34,7 +34,7 @@ sealed interface EventError : DomainError {
             override val code: String = "invalid-schedule-format"
         }
 
-        /** 開始/終了が範囲をなさない（時刻指定は `start < end`、終日は `startDate <= endDate` でない）。 */
+        /** 開始/終了が範囲をなさない（時刻指定は `start < end`、終日は `startDate < endDate` でない）。 */
         data object InvalidScheduleRange : ValidationError {
             override val name: String = "schedule"
             override val code: String = "invalid-schedule-range"
@@ -47,10 +47,9 @@ sealed interface EventError : DomainError {
         }
     }
 
-    sealed interface ConflictError : EventError {
-        /** 同一 Google イベント（インスタンス）の重複投影（UNIQUE(google_event_id)）。 */
-        data object DuplicateGoogleEvent : ConflictError {
-            override val code: String = "duplicate-google-event"
+    sealed interface ExternalError : EventError {
+        data object GoogleCalendarError : ExternalError {
+            override val code: String = "google-calendar-error"
         }
     }
 }

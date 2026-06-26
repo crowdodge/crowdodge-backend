@@ -3,8 +3,8 @@ package com.crowdodge.event.domain.model
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure
 import com.crowdodge.event.domain.error.EventError
+import com.crowdodge.shared.kernel.AppTime
 import com.crowdodge.shared.kernel.EntityUuid
-import com.crowdodge.shared.kernel.TimeRange
 import kotlinx.datetime.LocalDate
 import kotlin.time.Duration
 import kotlin.time.Instant
@@ -58,46 +58,40 @@ value class RecurringEventId private constructor(val value: String) {
     }
 }
 
-/**
- * カレンダーの予定の日時 VO。
- * 時刻指定（datetime ペア）か終日（date ペア）のいずれか一方で予定を管理する。
- * 各ペアは両方そろう必要があり、時刻指定は start < end、終日は startDate <= endDate（終了日は排他）。
- */
-@ConsistentCopyVisibility
-data class Schedule private constructor(
-    val startTime: Instant? = null,
-    val endTime: Instant? = null,
-    val startDate: LocalDate? = null,
-    val endDate: LocalDate? = null,
-) {
+sealed class Schedule {
+    /** 開始時刻を返す。 */
+    abstract fun start(): Instant
+
+    /** 終了時刻を返す。 */
+    abstract fun end(): Instant
+
+    data class Timed(val startTime: Instant, val endTime: Instant) : Schedule() {
+        override fun start(): Instant = startTime
+
+        override fun end(): Instant = endTime
+    }
+
+    data class AllDay(val startDate: LocalDate, val endDate: LocalDate) : Schedule() {
+        override fun start(): Instant = AppTime.startOfBusinessDate(startDate)
+
+        override fun end(): Instant = AppTime.startOfBusinessDate(endDate)
+    }
+
     companion object {
-        fun Raise<EventError.ValidationError>.eventSchedule(
-            startTime: Instant? = null,
-            endTime: Instant? = null,
-            startDate: LocalDate? = null,
-            endDate: LocalDate? = null
+        fun Raise<EventError.ValidationError>.schedule(
+            startTime: Instant,
+            endTime: Instant,
         ): Schedule {
-            val isBlank = startTime == null && endTime == null && startDate == null && endDate == null
-            val isTimeSet = startTime != null && endTime != null && startDate == null && endDate == null
-            val isDateSet = startTime == null && endTime == null && startDate != null && endDate != null
+            ensure(startTime < endTime) { EventError.ValidationError.InvalidScheduleRange }
+            return Timed(startTime, endTime)
+        }
 
-            // なんらかの値がセットされている
-            ensure(!isBlank) { EventError.ValidationError.BlankSchedule }
-
-            // 時刻ペアのみ or 日付ペアのみ
-            ensure(isTimeSet || isDateSet) { EventError.ValidationError.InvalidScheduleFormat }
-
-            // 時刻指定は start < end
-            if (isTimeSet) {
-                ensure(startTime < endTime) { EventError.ValidationError.InvalidScheduleRange }
-            }
-
-            // 終日は startDate <= endDate（終了日は排他のため同日可、逆転は不可）
-            if (isDateSet) {
-                ensure(startDate <= endDate) { EventError.ValidationError.InvalidScheduleRange }
-            }
-
-            return Schedule(startTime, endTime, startDate, endDate)
+        fun Raise<EventError.ValidationError>.schedule(
+            startDate: LocalDate,
+            endDate: LocalDate,
+        ): Schedule {
+            ensure(startDate < endDate) { EventError.ValidationError.InvalidScheduleRange }
+            return AllDay(startDate, endDate)
         }
     }
 }
@@ -134,7 +128,7 @@ data class EventContent(
  * Source of Truth は Google 側で、本集約は自社ドメイン（混雑予測・目的地推定・リマインド）が
  * 消費するフィールドのみを保持する（繰り返しルール rrule はサーバに持たない）。
  *
- * 不変条件は VO（[GoogleEventId]/[TimeRange] 等）が単体で担保する。
+ * 不変条件は VO（[GoogleEventId] 等）が単体で担保する。
  * title/description/location は Google が省略し得る（無題・概要なし等）ため null 許容。
  * 由来カレンダー [userCalendarUuid] は別 BC（user）を [UserCalendarUuid] で値参照する。
  */
@@ -144,6 +138,7 @@ data class Event private constructor(
     val userCalendarUuid: UserCalendarUuid,
     val googleEventId: GoogleEventId,
     val recurringEventId: RecurringEventId?,
+    val originalStart: Instant?,
     val eventContent: EventContent,
 ) {
     /** 時刻を変更する（Google 側の時刻編集を反映）。下流の再推定契機（EventRescheduled）。 */
@@ -151,6 +146,12 @@ data class Event private constructor(
         val eventContent = eventContent.copy(schedule = schedule)
         return copy(eventContent = eventContent)
     }
+
+    /**
+     * Google 側の最新状態で投影内容（[EventContent]）をまるごと差し替える（増分同期の更新適用）。
+     * 識別子（[eventUuid] / [userCalendarUuid] / [googleEventId] / [recurringEventId] / [originalStart]）は保つ。
+     */
+    fun reproject(eventContent: EventContent): Event = copy(eventContent = eventContent)
 
     /** リマインドタイミングを変更する。null は user_settings の既定値参照を表す。 */
     fun changeRemindTiming(remindTiming: RemindTiming?): Event {
@@ -164,27 +165,32 @@ data class Event private constructor(
             userCalendarUuid: UserCalendarUuid,
             googleEventId: GoogleEventId,
             recurringEventId: RecurringEventId?,
+            originalStart: Instant?,
             eventContent: EventContent,
         ): Event = Event(
             eventUuid = EventUuid.new(),
             userCalendarUuid = userCalendarUuid,
             googleEventId = googleEventId,
             recurringEventId = recurringEventId,
+            originalStart = originalStart,
             eventContent = eventContent,
         )
 
         /** 永続化済みの状態から再構築する（リポジトリ用）。 */
+        @Suppress("LongParameterList")
         fun reconstitute(
             eventUuid: EventUuid,
             userCalendarUuid: UserCalendarUuid,
             googleEventId: GoogleEventId,
             recurringEventId: RecurringEventId?,
+            originalStart: Instant?,
             eventContent: EventContent
         ): Event = Event(
             eventUuid = eventUuid,
             userCalendarUuid = userCalendarUuid,
             googleEventId = googleEventId,
             recurringEventId = recurringEventId,
+            originalStart = originalStart,
             eventContent = eventContent,
         )
     }
