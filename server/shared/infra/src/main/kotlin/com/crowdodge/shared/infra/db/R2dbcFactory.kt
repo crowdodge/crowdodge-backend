@@ -2,6 +2,8 @@ package com.crowdodge.shared.infra.db
 
 import io.r2dbc.pool.ConnectionPool
 import io.r2dbc.pool.ConnectionPoolConfiguration
+import io.r2dbc.postgresql.PostgresqlConnectionFactoryProvider
+import io.r2dbc.postgresql.client.SSLMode
 import io.r2dbc.spi.ConnectionFactories
 import io.r2dbc.spi.ConnectionFactoryOptions
 import org.jetbrains.exposed.v1.core.vendors.PostgreSQLDialect
@@ -37,6 +39,12 @@ object R2dbcFactory {
             .option(ConnectionFactoryOptions.DATABASE, config.database)
             .option(ConnectionFactoryOptions.USER, config.username)
             .option(ConnectionFactoryOptions.PASSWORD, config.password)
+            .option(PostgresqlConnectionFactoryProvider.SSL_MODE, config.sslMode.toR2dbcSslMode())
+            .apply {
+                if (config.pgbouncer) {
+                    option(PostgresqlConnectionFactoryProvider.PREPARED_STATEMENT_CACHE_QUERIES, 0)
+                }
+            }
             .build()
         val pool = ConnectionPool(
             ConnectionPoolConfiguration.builder(ConnectionFactories.get(options)).build(),
@@ -51,4 +59,14 @@ object R2dbcFactory {
         )
         return R2dbcConnection(database, pool)
     }
+
+    private fun DatabaseSslMode.toR2dbcSslMode(): SSLMode =
+        when (this) {
+            DatabaseSslMode.DISABLE -> SSLMode.DISABLE
+            DatabaseSslMode.ALLOW -> SSLMode.ALLOW
+            DatabaseSslMode.PREFER -> SSLMode.PREFER
+            DatabaseSslMode.REQUIRE -> SSLMode.REQUIRE
+            DatabaseSslMode.VERIFY_CA -> SSLMode.VERIFY_CA
+            DatabaseSslMode.VERIFY_FULL -> SSLMode.VERIFY_FULL
+        }
 }

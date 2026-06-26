@@ -17,7 +17,7 @@ dependencies {
     api(libs.exposed.kotlin.datetime)
     implementation(libs.r2dbc.pool)
     implementation(libs.r2dbc.spi)
-    runtimeOnly(libs.r2dbc.postgresql)
+    implementation(libs.r2dbc.postgresql)
 
     // readiness の SELECT 1 にタイムアウトを掛けるため明示依存（exposed-r2dbc 経由でも入るが明示する）
     implementation(libs.kotlinx.coroutines.core)
