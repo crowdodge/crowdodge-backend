@@ -2,26 +2,27 @@
 
 混雑回避パーソナライズ型予定管理アプリ **crowdodge**（チーム「なせばなる」）のバックエンド。
 
-- 設計方針: [`docs/architecture.md`](docs/architecture.md)（DDD + モジュラーモノリス）
+- 技術仕様: [`docs/README.md`](docs/README.md)（DDD + モジュラーモノリス）
 - 技術スタック: Kotlin (JDK 21) / Ktor / Gradle (Kotlin DSL) / PostgreSQL + PostGIS / Exposed (R2DBC) / Flyway / Koin / Arrow
 
 ## リポジトリ構成
 
 ```
-crowdodge-backend/        # リポジトリルート（docker-compose / deploy 等はここに配置）
-├── docs/                 # 設計ドキュメント（architecture.md ほか）
-└── server/               # Gradle プロジェクト本体（基盤・§14 step1）
+crowdodge-backend/        # リポジトリルート（compose.yml / Taskfile 等はここに配置）
+├── docs/                 # 技術仕様ドキュメント
+└── server/               # Gradle プロジェクト本体
     ├── app/              # Ktor 起動・全モジュール配線・HTTP サーバ・マイグレーション(Flyway)
     ├── shared/
     │   ├── kernel/       # 共通 VO / DomainEvent 基底 / TransactionRunner ポート
-    │   └── infra/        # R2DBC 基盤 / EventBus / Problem(RFC9457)
-    └── contexts/         # 各 BC（user / event / destination / congestion / notification）※後続追加
+    │   └── infra/        # R2DBC 基盤 / DB readiness probe / Problem(RFC9457)
+    └── contexts/         # 各 BC（user / event / destination / congestion / notification）
 ```
 
 ## 必要環境
 
 - JDK 21（toolchain で自動選択。各依存は `gradle/libs.versions.toml` で一元管理）
-- PostgreSQL + PostGIS（アプリ実行時。DB 接続情報は環境変数で上書き可）
+- Docker（開発用DBの Docker Compose v2 と Testcontainers で使用）
+- PostgreSQL + PostGIS（アプリ実行時。開発用DBは `compose.yml` で起動可。DB 接続情報は環境変数で上書き可）
 
 ## ビルド / 実行
 
@@ -30,7 +31,7 @@ Gradle プロジェクトは `server/` 配下にある。
 ```bash
 cd server
 
-# ビルド（kernel のユニットテストを含む）
+# ビルド（全モジュール）
 ./gradlew build
 
 # マイグレーション（アプリ起動とは独立した専用コマンド。デプロイ前 / init container で実行）
@@ -96,4 +97,4 @@ GET /ready    ->  200 {"status":"READY"}                              # readines
 
 ## ロードマップ
 
-実装は `docs/architecture.md` §14 に従う。本リポジトリは **step1（基盤）** 時点。
+実装順序と現行の実装状況は [`docs/operations/roadmap.md`](docs/operations/roadmap.md) に従う。

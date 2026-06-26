@@ -7,7 +7,7 @@ crowdodge のバックエンドリポジトリ。
 | パス | 内容 |
 |---|---|
 | [server/](server/) | Kotlin バックエンド本体（Gradle マルチモジュール）。詳細は [server/CLAUDE.md](server/CLAUDE.md) |
-| [docs/architecture.md](docs/architecture.md) | 設計・実装規約の唯一の正（設計憲法） |
+| [docs/README.md](docs/README.md) | 技術仕様ドキュメントの入口 |
 | [.github/workflows/](.github/workflows/) | issue アサイン時の着手・Project 追加などフロー自動化 |
 
 ## Git / GitHub フロー

@@ -2,7 +2,7 @@
 
 Kotlin / Ktor / Exposed R2DBC / Arrow による DDD モジュラーモノリス（4層アーキテクチャ）。
 
-**設計・実装規約の唯一の正は [docs/architecture.md](../docs/architecture.md)**（リポジトリ直下）。規約の詳細はここに重複させず、architecture.md と各 skill に従う。
+**技術仕様の入口は [docs/README.md](../docs/README.md)**（リポジトリ直下）。規約の詳細はここに重複させず、docs 配下の該当ファイルと各 skill に従う。
 
 ## 作業の進め方（skill）
 
