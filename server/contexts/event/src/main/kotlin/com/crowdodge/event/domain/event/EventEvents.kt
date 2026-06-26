@@ -14,8 +14,18 @@ data class EventScheduled(
 
 /**
  * 予定の時刻が変更された（§6.2 / §7）。下流（destination）がルート・混雑予測をやり直す契機。
+ * 予測に効く内容（時刻・タイトル・概要・場所）の変更を含む。
  */
 data class EventRescheduled(
+    val eventUuid: EventUuid,
+    override val occurredAt: Instant,
+) : DomainEvent
+
+/**
+ * 予定のリマインドタイミングだけが変更された（時刻等の予測関連は不変）。通知 BC が通知を再スケジュールする契機。
+ * 目的地・混雑の再推定（高コスト）は不要なため [EventRescheduled] とは別イベントにする。
+ */
+data class EventRemindTimingChanged(
     val eventUuid: EventUuid,
     override val occurredAt: Instant,
 ) : DomainEvent
