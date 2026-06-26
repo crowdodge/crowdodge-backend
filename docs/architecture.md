@@ -36,6 +36,14 @@
 | ログ | **Logback** + slf4j | 構造化ログ |
 | 認証 | Ktor Authentication (OAuth2 + JWT/Session) | Google サインイン → 自前セッション |
 
+### 1.1 日時
+- 一時点は `kotlin.time.Instant`、日付は `kotlinx.datetime.LocalDate` で表す。
+- Google Calendar 投影の一時点は PostgreSQL の `timestamptz` に保存する。
+- 業務日付の基準 timezone は `Asia/Tokyo`。
+- timezone 変換は `shared/kernel` の `AppTime` に集約する。
+- Google Calendar の終日予定は `LocalDate` の半開区間 `[startDate, endDate)` として扱う。
+- 終日予定を `Instant` に変換する場合は、`AppTime.businessTimeZone` の日付境界を使う。
+
 ---
 
 ## 2. アーキテクチャ全体方針

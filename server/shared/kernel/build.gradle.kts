@@ -11,6 +11,7 @@ dependencies {
     // Ktor / Exposed / Koin は import しない。
     api(libs.arrow.core)
     api(libs.kotlinx.coroutines.core)
+    api(libs.kotlinx.datetime)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
