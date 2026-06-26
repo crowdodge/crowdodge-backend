@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS events (created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, event_uuid uuid PRIMARY KEY, user_calendar_uuid uuid NOT NULL, google_event_id TEXT NOT NULL, recurring_event_id TEXT NULL, original_start TIMESTAMPTZ NULL, title TEXT NULL, description TEXT NULL, "location" TEXT NULL, start_time TIMESTAMPTZ NULL, end_time TIMESTAMPTZ NULL, start_date DATE NULL, end_date DATE NULL, remind_timing BIGINT NULL);
+ALTER TABLE events ADD CONSTRAINT events_user_calendar_uuid_google_event_id_unique UNIQUE (user_calendar_uuid, google_event_id);
+CREATE TABLE IF NOT EXISTS event_calendar_syncs (created_at TIMESTAMPTZ NOT NULL, updated_at TIMESTAMPTZ NOT NULL, user_calendar_uuid uuid PRIMARY KEY, sync_token TEXT NULL, materialized_until TIMESTAMPTZ NULL, watch_channel_id TEXT NULL, watch_resource_id TEXT NULL, watch_channel_token TEXT NULL, watch_expiration TIMESTAMPTZ NULL);
+ALTER TABLE event_calendar_syncs ADD CONSTRAINT event_calendar_syncs_watch_channel_id_unique UNIQUE (watch_channel_id);
+CREATE INDEX event_calendar_syncs_watch_expiration ON event_calendar_syncs (watch_expiration);

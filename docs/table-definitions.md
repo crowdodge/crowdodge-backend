@@ -104,19 +104,21 @@
 |---|---|---|---|---|---|---|
 | event_uuid | uuid | ● | ● | | | イベントID |
 | user_calendar_uuid | uuid | | ● | | user_calendars.user_calendar_uuid | 由来カレンダー |
-| google_event_id | text | | ● | ● | | Google イベント（インスタンス）ID。突合キー |
+| google_event_id | text | | ● | | | Google イベント（インスタンス）ID。突合キー |
 | recurring_event_id | text | | | | | Google シリーズ（マスタ）ID。単発は null |
-| original_start | timestamp | | | | | RECURRENCE-ID（編集スコープ判定の分割点） |
-| etag | text | | | | | Google etag（競合・ループ防止判定用） |
+| original_start | timestamptz | | | | | RECURRENCE-ID（編集スコープ判定の分割点） |
 | title | text | | ● | | | タイトル |
 | description | text | | | | | 概要 |
 | location | text | | | | | 場所 |
-| start_time | timestamp | | ● | | | 開始時刻 |
-| end_time | timestamp | | ● | | | 終了時刻 |
-| is_all_day | boolean | | ● | | | 終日予定フラグ |
+| start_time | timestamptz | | | | | 開始時刻 |
+| end_time | timestamptz | | | | | 終了時刻 |
+| start_date | date | | | | | 終日予定の開始日 |
+| end_date | date | | | | | 終日予定の終了日（排他） |
 | remind_timing | interval | | | | | リマインド間隔。null は user_settings 参照 |
-| created_at | timestamp | | ● | | | |
-| updated_at | timestamp | | ● | | | |
+| created_at | timestamptz | | ● | | | |
+| updated_at | timestamptz | | ● | | | |
+
+- `UNIQUE(user_calendar_uuid, google_event_id)`: 同一カレンダー内の Google イベントを重複登録しない。
 
 ## 8. event_calendar_syncs — カレンダー同期・watch 状態
 
@@ -125,13 +127,14 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | 列(物理) | データ型 | PK | NOT NULL | 一意 | 参照 | 備考 |
 |---|---|---|---|---|---|---|
 | user_calendar_uuid | uuid | ● | ● | | user_calendars.user_calendar_uuid | 由来カレンダー（下流→上流参照） |
+| sync_token | text | | | | | Google Calendar 増分同期の継続トークン |
 | materialized_until | timestamptz | | | | | ローリング窓で実体化済みの将来端（不在削除の境界） |
 | watch_channel_id | text | | | ● | | Google Push チャンネルID（webhook ルーティング） |
 | watch_resource_id | text | | | | | watch 対象リソースID（channels.stop に使用） |
 | watch_channel_token | text | | | | | webhook 検証トークン（X-Goog-Channel-Token の照合用） |
 | watch_expiration | timestamptz | | | | | watch チャンネル失効時刻（renew sweep 用・index） |
-| created_at | timestamp | | ● | | | |
-| updated_at | timestamp | | ● | | | |
+| created_at | timestamptz | | ● | | | |
+| updated_at | timestamptz | | ● | | | |
 
 - `watch_expiration` に index（renew 抽出用）。
 
