@@ -5,7 +5,7 @@
 
 - カレンダーの Source of Truth は Google カレンダー。サーバは個別の予定（具体的な開始/終了時刻を持つ単発インスタンス）のみを近未来のローリング窓に投影として保持する。繰り返しルールはサーバに持たない。
 - 命名規約: テーブル・列は snake_case。主キーは `<単数テーブル名>_uuid`（uuid型）。外部キー列名は親PKと一致。
-- すべてのテーブルは `created_at` / `updated_at`（timestamp, NOT NULL）を持つ（明記しない場合も同様）。
+- すべてのテーブルは `created_at` / `updated_at`（timestamptz, NOT NULL）を持つ（明記しない場合も同様）。
 
 ## テーブル一覧
 
@@ -33,8 +33,8 @@
 | user_uuid | uuid | ● | ● | | ユーザーID |
 | google_id | text | | ● | | Google ID |
 | email | text | | ● | | メールアドレス |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 ## 2. user_settings — ユーザー設定
 
@@ -43,8 +43,8 @@
 | user_uuid | uuid | ● | ● | users.user_uuid | ユーザーID |
 | home | geography(Point,4326) | | ● | | 自宅座標 |
 | remind_timing | interval | | ● | | リマインドタイミング既定値 |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 ## 3. user_calendars — 選択カレンダー
 
@@ -55,8 +55,8 @@
 | user_calendar_uuid | uuid | ● | ● | | | ユーザーカレンダーID |
 | user_uuid | uuid | | ● | | users.user_uuid | ユーザーID |
 | google_calendar_id | text | | ● | | | Google カレンダーID |
-| created_at | timestamp | | ● | | | |
-| updated_at | timestamp | | ● | | | |
+| created_at | timestamptz | | ● | | | |
+| updated_at | timestamptz | | ● | | | |
 
 - `UNIQUE(user_uuid, google_calendar_id)`: 同一ユーザーが同一カレンダーを重複登録しない。1ユーザー複数カレンダー・共有カレンダーの複数ユーザー登録はいずれも許容する。
 
@@ -68,8 +68,8 @@
 | user_uuid | uuid | | ⚫︎ | users.user_uuid |           |
 | item_type | text | | ⚫︎ | | アイテムごとに固有 |
 | quantity | integer | | ⚫︎ | | 所持数 |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 - `UNIQUE(user_uuid, item_type)`: 同一ユーザーが同一アイテムの所持数を重複登録しないため。
 
@@ -83,8 +83,8 @@
 | status | text | | | | ステータス |
 | expires_at | timestamp | | | | 有効期限 |
 | rc_original_transaction_id | text | | ● | | サブスク管理サービス（RevenueCat）取引ID |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 ## 6. user_devices — 通知デバイス
 
@@ -93,8 +93,8 @@
 | device_uuid | uuid | ● | ● | | デバイスID |
 | user_uuid | uuid | | ● | users.user_uuid | ユーザーID |
 | fcm_token | text | | ● | | デバイストークン（FCM） |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 ## 7. events — 個別の予定（Google カレンダーの投影）
 
@@ -150,8 +150,8 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | destination_point | geography(Point,4326) | | ● | | 目的地座標 |
 | route_duration | interval | | ● | | 所要時間 |
 | route_information | jsonb | | ● | | ルート情報（LLM入力用） |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |
 
 ## 10. event_destination_links — 予定↔目的地グループ
 
@@ -159,7 +159,7 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 |---|---|---|---|---|---|
 | event_uuid | uuid | ● | ● | events.event_uuid | 予定 |
 | event_destination_uuid | uuid | | ● | event_destinations.event_destination_uuid | 所属グループ |
-| created_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
 
 ## 11. event_congestion_predictions — 混雑予測
 
@@ -172,8 +172,8 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | congestion_start_time | timestamp | | ● | | | 混雑開始日時 |
 | congestion_end_time | timestamp | | ● | | | 混雑終了日時 |
 | description | text | | ● | | | 概要 |
-| created_at | timestamp | | ● | | | |
-| updated_at | timestamp | | ● | | | |
+| created_at | timestamptz | | ● | | | |
+| updated_at | timestamptz | | ● | | | |
 
 ## 12. notification_schedules — 通知スケジュール
 
@@ -187,5 +187,5 @@ Google カレンダーを `events` 投影へ取り込むための同期・watch 
 | notificate_time | timestamp | | ● | | 通知時刻 |
 | kind | text | | ● | | 通知種別: Reminder（必須=予定前リマインド） / CongestionAlert（任意=混雑通知） |
 | status | text | | ● | | ステータス: pending / processing / completed / failed / cancelled |
-| created_at | timestamp | | ● | | |
-| updated_at | timestamp | | ● | | |
+| created_at | timestamptz | | ● | | |
+| updated_at | timestamptz | | ● | | |

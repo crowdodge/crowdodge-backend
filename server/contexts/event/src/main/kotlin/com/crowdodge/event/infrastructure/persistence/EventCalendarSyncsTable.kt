@@ -1,8 +1,9 @@
 package com.crowdodge.event.infrastructure.persistence
 
+import com.crowdodge.shared.infra.db.TimestampedTable
 import com.crowdodge.shared.infra.db.instantTimestampWithTimeZone
 
-object EventCalendarSyncsTable : EventTimestampedTable("event_calendar_syncs") {
+object EventCalendarSyncsTable : TimestampedTable("event_calendar_syncs") {
     // per-user 同期の連携状態。1 user_calendar = 1 watch チャネル + 1 syncToken。
     // 参照: user_calendars.user_calendar_uuid（別 BC を値参照する ACL。cross-BC の物理 FK は張らない）。
     val userCalendarUuid = uuid("user_calendar_uuid")

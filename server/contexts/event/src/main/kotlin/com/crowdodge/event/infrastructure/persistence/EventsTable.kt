@@ -1,10 +1,11 @@
 package com.crowdodge.event.infrastructure.persistence
 
+import com.crowdodge.shared.infra.db.TimestampedTable
 import com.crowdodge.shared.infra.db.instantTimestampWithTimeZone
 import org.jetbrains.exposed.v1.datetime.date
 import org.jetbrains.exposed.v1.datetime.duration
 
-object EventsTable : EventTimestampedTable("events") {
+object EventsTable : TimestampedTable("events") {
     val eventUuid = uuid("event_uuid")
     val userCalendarUuid = uuid("user_calendar_uuid") // 参照: user_calendars.user_calendar_uuid
     val googleEventId = text("google_event_id")
