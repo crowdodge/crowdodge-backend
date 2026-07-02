@@ -13,8 +13,8 @@ crowdodge-backend/        # リポジトリルート（compose.yml / Taskfile �
 └── server/               # Gradle プロジェクト本体
     ├── app/              # Ktor 起動・全モジュール配線・HTTP サーバ・マイグレーション(Flyway)
     ├── shared/
-    │   ├── kernel/       # 共通 VO / DomainEvent 基底 / TransactionRunner ポート
-    │   └── infra/        # R2DBC 基盤 / DB readiness probe / Problem(RFC9457)
+    │   ├── kernel/       # 共通 VO / DomainEvent / TransactionRunner ポート
+    │   └── infra/        # R2DBC 基盤 / DB readiness probe / Problem(RFC9457) / Domain Event配送
     └── contexts/         # 各 BC（user / event / destination / congestion / notification）
 ```
 

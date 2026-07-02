@@ -28,7 +28,7 @@
 | 通知スケジュール | `NotificationSchedule` | 未実装 | `notification_schedules` Exposed定義のみ |
 | 通知ステータス | `NotificationStatus` | 未実装 | `status`。現行定義コメントは `canceled` 表記 |
 | 通知種別 | `NotificationKind` | 未実装 | `kind` |
-| ドメインイベント基底 | `DomainEvent` | interface | 永続化方式は未確定 |
+| ドメインイベント基底 | `DomainEvent` | interface | commit後in-process配送 |
 
 ## 命名ルール
 

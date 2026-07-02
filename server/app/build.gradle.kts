@@ -36,6 +36,8 @@ dependencies {
     implementation(libs.koin.ktor)
     implementation(libs.koin.logger.slf4j)
 
+    implementation(libs.kotlinx.coroutines.core)
+
     // マイグレーション SQL 生成ツール（開発時のみ。JDBC で現スキーマと差分比較）
     implementation(libs.exposed.jdbc)
     implementation(libs.exposed.migration.core)

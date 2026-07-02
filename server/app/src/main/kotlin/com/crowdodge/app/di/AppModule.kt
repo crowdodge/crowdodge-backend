@@ -6,9 +6,16 @@ import com.crowdodge.shared.infra.db.DatabaseReadinessProbe
 import com.crowdodge.shared.infra.db.ExposedTransactionRunner
 import com.crowdodge.shared.infra.db.R2dbcConnection
 import com.crowdodge.shared.infra.db.R2dbcFactory
+import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
+import com.crowdodge.shared.kernel.DomainEventHandler
+import com.crowdodge.shared.kernel.DomainEventPublisher
 import com.crowdodge.shared.kernel.ReadinessProbe
 import com.crowdodge.shared.kernel.TransactionRunner
 import io.ktor.server.application.ApplicationEnvironment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import org.jetbrains.exposed.v1.r2dbc.R2dbcDatabase
 import org.koin.dsl.module
 import org.koin.dsl.onClose
@@ -25,5 +32,11 @@ fun appModule(environment: ApplicationEnvironment) = module {
     single<TransactionRunner> { ExposedTransactionRunner(get()) }
     // readiness（/ready）用 DB 到達性プローブ。R2DBC は遅延接続のためここで初接続する。
     single<ReadinessProbe> { DatabaseReadinessProbe(get()) }
-    // ドメインイベントの配送実装（DomainEventPublisher）は未確定のため未配線（§9）。
+    single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) } onClose { it?.cancel() }
+    single<DomainEventPublisher> {
+        TransactionalInProcessDomainEventPublisher(
+            handlerProvider = { getAll<DomainEventHandler>() },
+            scope = get(),
+        )
+    }
 }
