@@ -6,6 +6,7 @@ import com.crowdodge.app.plugins.configureMonitoring
 import com.crowdodge.app.plugins.configureRouting
 import com.crowdodge.app.plugins.configureSerialization
 import com.crowdodge.app.plugins.configureStatusPages
+import com.crowdodge.event.presentation.configureEventRouting
 import com.crowdodge.user.presentation.configureUserRouting
 import io.ktor.server.application.Application
 
@@ -24,5 +25,6 @@ fun Application.module() {
     configureMonitoring()
     configureAuthentication()
     configureRouting()
+    configureEventRouting()
     configureUserRouting()
 }

@@ -9,8 +9,8 @@
 
 ## 実装状況
 
-- 実装済み: Google Calendar API クライアント、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影。
-- 未実装: watch登録・更新ジョブ、Webhook受信ルート、予定ドメインイベントの下流購読者。
+- 実装済み: Google Calendar API クライアント、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影、Webhook受信ルート。
+- 未実装: watch登録・更新ジョブ、予定ドメインイベントの下流購読者。
 
 ## 基本方針
 
@@ -135,6 +135,11 @@ user BC は保存済み scope を検証し、access token の失効まで1分以
 
 ## watch
 
-- webhook 受信時は `X-Goog-Channel-ID` 相当の `channelId` で `event_calendar_syncs.watch_channel_id` を逆引きする。
+- `POST /webhooks/google-calendar` で Google Calendar webhook 通知を受ける。
+- `X-Goog-Channel-ID` と `X-Goog-Resource-State` は必須とし、不足時は `400 Bad Request` を返す。
+- `X-Goog-Resource-State: sync` は同期せず `204 No Content` を返す。
+- `X-Goog-Resource-State: exists` の場合、`X-Goog-Channel-ID` で `event_calendar_syncs.watch_channel_id` を逆引きする。
+- 保存済み `watch_channel_token` と `X-Goog-Channel-Token` が一致しない場合は同期せず `204 No Content` を返す。
+- 登録済み channel で token が一致した場合は増分同期を実行し、成功時は `204 No Content`、同期失敗時は `502 Bad Gateway` を返す。
 - `watch_resource_id`、`watch_channel_token`、`watch_expiration` は保存列のみ存在する。
-- watch登録、検証、再登録ジョブは未実装。
+- watch登録と再登録ジョブは未実装。

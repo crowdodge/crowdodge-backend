@@ -1,5 +1,6 @@
 package com.crowdodge.event.di
 
+import com.crowdodge.event.application.command.HandleGoogleCalendarWebhookUseCase
 import com.crowdodge.event.application.port.CalendarSyncStatePort
 import com.crowdodge.event.application.port.GoogleCalendarEventsGateway
 import com.crowdodge.event.application.service.GoogleCalendarEventSynchronizer
@@ -26,4 +27,5 @@ fun eventModule() = module {
             get(),
         )
     }
+    single<HandleGoogleCalendarWebhookUseCase> { HandleGoogleCalendarWebhookUseCase(get(), get()) }
 }

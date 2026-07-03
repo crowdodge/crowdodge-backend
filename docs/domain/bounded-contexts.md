@@ -39,7 +39,7 @@
 
 - ドメインモデル、エラー型、イベント、同期サービス、同期ポート、Exposed リポジトリは実装済み。
 - Google Calendar APIクライアント、初回同期、差分同期、`syncToken`失効時のフル同期は実装済み。
-- presentation 層の業務APIは未実装。
+- Google Calendar webhook 受信routeは実装済み。その他のpresentation層の業務APIは未実装。
 
 ### 責務
 
