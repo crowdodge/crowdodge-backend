@@ -14,7 +14,7 @@ application {
 }
 
 dependencies {
-    // app だけが全 BC（現時点では shared）を知り、Koin で配線する（§4）。
+    // app だけが全 BC を知り、各 BC の DI モジュールと BC 間連携を束ねる。
     implementation(projects.shared.kernel)
     implementation(projects.shared.infra)
     implementation(projects.contexts.user)
@@ -27,10 +27,14 @@ dependencies {
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.call.id)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.java.jwt)
 
     // DI
     implementation(libs.koin.ktor)

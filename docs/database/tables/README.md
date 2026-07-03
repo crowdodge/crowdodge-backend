@@ -9,6 +9,8 @@
 | `users` | ユーザー基本情報 | マイグレーション反映済み | [users.md](users.md) |
 | `user_settings` | ユーザー設定 | マイグレーション反映済み | [user-settings.md](user-settings.md) |
 | `user_calendars` | 同期対象カレンダー | マイグレーション反映済み | [user-calendars.md](user-calendars.md) |
+| `user_google_credentials` | Google OAuth資格情報 | マイグレーション反映済み | [user-google-credentials.md](user-google-credentials.md) |
+| `user_auth_refresh_tokens` | アプリrefresh token | マイグレーション反映済み | [user-auth-refresh-tokens.md](user-auth-refresh-tokens.md) |
 | `user_items` | ユーザー所持アイテム | マイグレーション反映済み | [user-items.md](user-items.md) |
 | `user_subscriptions` | 課金状態 | マイグレーション反映済み | [user-subscriptions.md](user-subscriptions.md) |
 | `user_devices` | FCM通知デバイス | マイグレーション反映済み | [user-devices.md](user-devices.md) |

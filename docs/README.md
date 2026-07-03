@@ -30,6 +30,7 @@
 
 ### 外部連携
 
+- [Google認証とアプリセッション](integrations/google-auth.md)
 - [Google カレンダー同期](integrations/google-calendar-sync.md)
 - [外部サービス](integrations/external-services.md)
 
