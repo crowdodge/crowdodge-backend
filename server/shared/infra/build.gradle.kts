@@ -19,7 +19,7 @@ dependencies {
     implementation(libs.r2dbc.spi)
     implementation(libs.r2dbc.postgresql)
 
-    // readiness の SELECT 1 にタイムアウトを掛けるため明示依存（exposed-r2dbc 経由でも入るが明示する）
+    // readiness のタイムアウトと commit 後 Domain Event 配送 scope のため明示依存。
     implementation(libs.kotlinx.coroutines.core)
 
     // Problem(RFC9457) を Ktor 応答に載せるため最小の ktor-server-core を参照（§3 shared/infra）

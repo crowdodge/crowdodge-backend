@@ -23,7 +23,7 @@ presentation   infrastructure
 | `domain` | 集約、エンティティ、VO、ドメインエラー、ドメインイベント、リポジトリ interface |
 | `application` | ユースケース、トランザクション境界、被駆動ポート、公開戻り値 |
 | `presentation` | Ktor ルート、DTO変換、HTTPエラー変換 |
-| `infrastructure` | Exposed R2DBC、DBアダプタ、外部API、FCM、EventBus |
+| `infrastructure` | Exposed R2DBC、DBアダプタ、外部API、FCM、Domain Event配送 |
 
 ## 依存ルール
 
@@ -37,6 +37,6 @@ presentation   infrastructure
 
 ## 現行実装
 
-- `infrastructure` の実装済み範囲は R2DBC、Exposed テーブル、DBリポジトリ、readiness probe が中心。
-- 外部APIクライアント、FCM、EventBus配送実装は責務範囲だが未実装。
-- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe` のみ配線している。
+- `infrastructure` の実装済み範囲は R2DBC、Exposed テーブル、DBリポジトリ、readiness probe、Domain Event配送が中心。
+- 外部APIクライアント、FCMは責務範囲だが未実装。
+- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe`、`DomainEventPublisher` を配線している。

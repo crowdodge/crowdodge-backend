@@ -6,8 +6,7 @@
 
 | 項目 | 状態 |
 |---|---|
-| イベント配送方式 | 未決 |
-| `DomainEventPublisher` の実装とDI配線 | 未実装 |
+| 予定ドメインイベントの下流購読者 | 未実装 |
 | 通知スケジューラ方式 | 未決 |
 | `notification_schedules.notificate_time` の実装 | 確定仕様。Exposed定義とマイグレーションへの反映漏れ |
 | Gemini 結果のキャッシュまたは永続化方針 | 未決 |

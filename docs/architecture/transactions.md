@@ -18,6 +18,8 @@
 - リポジトリはユースケースが開始した現在のトランザクションへ参加する。
 - コンテキストをまたぐ変更は分散トランザクションにしない。
 - コンテキスト間の整合性はドメインイベントによる結果整合性で扱う。
+- `DomainEventPublisher.publish` はユースケースが開始したトランザクション内で呼び出す。
+- Domain Event handler は commit 成功後に実行し、rollback 時は実行しない。
 - Google Calendar、Gemini、FCM などの外部API呼び出しはトランザクション内に入れない。
 
 ## R2DBC

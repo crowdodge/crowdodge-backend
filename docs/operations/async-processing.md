@@ -8,9 +8,11 @@
 
 - コンテキスト間連携はドメインイベントで行う。
 - `application` は `DomainEventPublisher` ポートにだけ依存する。
-- `DomainEventPublisher` の配送実装は未実装。
-- `appModule` では `DomainEventPublisher` を未配線とする。
-- 実装方式を決定した場合は `infrastructure` に追加する。
+- `DomainEventPublisher` はExposed R2DBCのtransactionへcommit後コールバックを登録する。
+- commit成功後にin-processで対応する `DomainEventHandler` を実行する。
+- rollback時は配送しない。
+- Handler失敗はログへ記録し、確定済みDB更新は戻さない。
+- `appModule` で `TransactionalInProcessDomainEventPublisher` を配線する。
 
 ## 通知ジョブ
 

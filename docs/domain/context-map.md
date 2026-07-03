@@ -10,12 +10,12 @@
 - 連携はドメインイベントまたは公開ポートで行う。
 - コンテキストをまたぐ更新は結果整合性で扱う。
 - 外部API境界には ACL を置く。
-- 現行実装では `DomainEventPublisher` ポートのみ存在する。
-- `DomainEventPublisher` の実装と `appModule` での配線は未実装。
+- `DomainEventPublisher` はcommit後のin-process配送として実装済み。
+- `appModule` は `DomainEventPublisher` を配線する。
 
 ## 実装済みイベント型
 
-以下は型定義として実装済み。配送実装と購読側ユースケースは未実装。
+以下は型定義として実装済み。
 
 ```text
 user

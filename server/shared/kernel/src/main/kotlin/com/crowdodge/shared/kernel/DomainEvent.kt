@@ -12,6 +12,17 @@ interface DomainEvent {
 }
 
 /**
+ * ドメインイベント購読ハンドラ。
+ *
+ * infrastructure 側の publisher が対象イベントを判定し、該当する handler だけへ配送する。
+ */
+interface DomainEventHandler {
+    fun supports(event: DomainEvent): Boolean
+
+    suspend fun handle(event: DomainEvent)
+}
+
+/**
  * ドメインイベント発行ポート（被駆動）。application が依存し、
  * infrastructure が実装する（§9。配送の実装方式は未確定）。
  */
