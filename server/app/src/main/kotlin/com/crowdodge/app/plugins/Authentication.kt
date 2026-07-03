@@ -5,7 +5,7 @@ import com.auth0.jwt.JWTVerifier
 import com.crowdodge.shared.infra.web.Problem
 import com.crowdodge.shared.infra.web.respondProblem
 import com.crowdodge.shared.kernel.UserUuid
-import com.crowdodge.user.infrastructure.security.JwtAppTokenConfig
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.infrastructure.security.hmacAlgorithm
 import com.crowdodge.user.presentation.APP_JWT_AUTH_NAME
 import com.crowdodge.user.presentation.AuthenticatedUserPrincipal

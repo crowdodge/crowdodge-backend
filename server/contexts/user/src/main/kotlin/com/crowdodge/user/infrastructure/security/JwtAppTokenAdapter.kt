@@ -7,6 +7,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.crowdodge.shared.kernel.UserUuid
 import com.crowdodge.user.application.port.AppRefreshToken
 import com.crowdodge.user.application.port.AppTokenPort
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.domain.model.AuthRefreshTokenHash
 import com.crowdodge.user.domain.model.AuthRefreshTokenHash.Companion.authRefreshTokenHash
 import java.security.MessageDigest
@@ -14,16 +15,7 @@ import java.security.SecureRandom
 import java.util.Base64
 import java.util.Date
 import kotlin.time.Clock
-import kotlin.time.Duration
 import java.time.Instant as JavaInstant
-
-data class JwtAppTokenConfig(
-    val issuer: String,
-    val audience: String,
-    val secret: String,
-    val accessTokenTtl: Duration,
-    val refreshTokenTtl: Duration,
-)
 
 fun JwtAppTokenConfig.hmacAlgorithm(): Algorithm {
     require(secret.toByteArray(Charsets.UTF_8).size >= MIN_SECRET_BYTES) {

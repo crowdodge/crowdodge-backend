@@ -1,15 +1,19 @@
 package com.crowdodge.event.infrastructure.db.datasource
 
+import com.crowdodge.event.application.port.CalendarWatchRegistration
 import com.crowdodge.event.domain.model.UserCalendarUuid
 import com.crowdodge.event.infrastructure.db.model.EventCalendarSync
 import com.crowdodge.event.infrastructure.persistence.EventCalendarSyncsTable
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.ResultRow
+import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.statements.UpdateBuilder
+import org.jetbrains.exposed.v1.core.vendors.ForUpdateOption
 import org.jetbrains.exposed.v1.r2dbc.deleteWhere
-import org.jetbrains.exposed.v1.r2dbc.select
 import org.jetbrains.exposed.v1.r2dbc.selectAll
+import org.jetbrains.exposed.v1.r2dbc.update
 import org.jetbrains.exposed.v1.r2dbc.upsert
 import kotlin.time.Instant
 
@@ -17,6 +21,7 @@ import kotlin.time.Instant
  * [EventCalendarSync]（連携状態）の Exposed(R2DBC) 永続化。domain repository IF は持たない
  * （連携機構の状態であり domain に属さないため）。トランザクションは呼び出し側が貼る。
  */
+@Suppress("TooManyFunctions")
 class ExposedEventCalendarSyncDataSource {
     /**
      * user_calendar_uuid（PK）で upsert。created_at は更新時にクロバーしない（updated_at は clientDefault で更新）。
@@ -42,13 +47,13 @@ class ExposedEventCalendarSyncDataSource {
             .firstOrNull()
             ?.let { toModel(it) }
 
-    /** syncToken だけを引く（連携進捗の読み取り）。 */
-    suspend fun findSyncToken(userCalendarUuid: UserCalendarUuid): String? =
+    suspend fun lockByUserCalendarUuid(userCalendarUuid: UserCalendarUuid): EventCalendarSync? =
         EventCalendarSyncsTable
-            .select(EventCalendarSyncsTable.syncToken)
+            .selectAll()
             .where { EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value }
+            .forUpdate(ForUpdateOption.ForUpdate)
             .firstOrNull()
-            ?.let { it[EventCalendarSyncsTable.syncToken] }
+            ?.let { toModel(it) }
 
     /**
      * syncToken だけを前進させる。watch 系・materialized_until など他の連携列は read-modify-write せず、
@@ -70,16 +75,56 @@ class ExposedEventCalendarSyncDataSource {
         }
     }
 
-    suspend fun materializedUntil(userCalendarUuid: UserCalendarUuid): Instant? =
-        EventCalendarSyncsTable
-            .select(EventCalendarSyncsTable.materializedUntil)
-            .where { EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value }
-            .firstOrNull()
-            ?.let { it[EventCalendarSyncsTable.materializedUntil] }
-
-    suspend fun delete(userCalendarUuid: UserCalendarUuid) {
-        EventCalendarSyncsTable.deleteWhere { EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value }
+    suspend fun updateAfterSync(
+        userCalendarUuid: UserCalendarUuid,
+        nextSyncToken: String?,
+        materializedUntil: Instant,
+    ) {
+        EventCalendarSyncsTable.update(
+            where = { EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value },
+        ) {
+            it[EventCalendarSyncsTable.syncToken] = nextSyncToken
+            it[EventCalendarSyncsTable.materializedUntil] = materializedUntil
+        }
     }
+
+    suspend fun replaceWatch(
+        userCalendarUuid: UserCalendarUuid,
+        expectedChannelId: String,
+        registration: CalendarWatchRegistration,
+    ): Boolean {
+        val updated = EventCalendarSyncsTable.update(
+            where = {
+                (EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value) and
+                    (EventCalendarSyncsTable.watchChannelId eq expectedChannelId)
+            },
+        ) {
+            it[EventCalendarSyncsTable.watchChannelId] = registration.channelId
+            it[EventCalendarSyncsTable.watchResourceId] = registration.resourceId
+            it[EventCalendarSyncsTable.watchChannelToken] = registration.channelToken
+            it[EventCalendarSyncsTable.watchExpiration] = registration.expiration
+        }
+        return updated == 1
+    }
+
+    suspend fun deleteIfChannelMatches(userCalendarUuid: UserCalendarUuid, channelId: String): Boolean {
+        val deleted = EventCalendarSyncsTable.deleteWhere {
+            (EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value) and
+                (EventCalendarSyncsTable.watchChannelId eq channelId)
+        }
+        return deleted == 1
+    }
+
+    suspend fun listAll(): List<EventCalendarSync> =
+        EventCalendarSyncsTable
+            .selectAll()
+            .toList()
+            .map { toModel(it) }
+
+    suspend fun delete(userCalendarUuid: UserCalendarUuid): Boolean =
+        EventCalendarSyncsTable.deleteWhere {
+            EventCalendarSyncsTable.userCalendarUuid eq userCalendarUuid.value
+        } == 1
 
     private fun toModel(sync: EventCalendarSync): (UpdateBuilder<*>) -> Unit = {
         with(EventCalendarSyncsTable) {

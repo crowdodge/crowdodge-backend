@@ -1,9 +1,14 @@
 package com.crowdodge.app.di
 
+import com.crowdodge.app.calendar.UserCalendarConnectionAdapter
+import com.crowdodge.app.calendar.googleCalendarConfig
 import com.crowdodge.app.calendar.googleOAuthConfig
 import com.crowdodge.app.calendar.googleTokenEncryptionKey
 import com.crowdodge.app.calendar.jwtAppTokenConfig
 import com.crowdodge.app.db.databaseConfig
+import com.crowdodge.event.application.port.CalendarConnectionProvider
+import com.crowdodge.event.di.eventModule
+import com.crowdodge.event.infrastructure.google.GoogleCalendarConfig
 import com.crowdodge.shared.infra.db.DatabaseConfig
 import com.crowdodge.shared.infra.db.DatabaseReadinessProbe
 import com.crowdodge.shared.infra.db.ExposedTransactionRunner
@@ -14,14 +19,15 @@ import com.crowdodge.shared.kernel.DomainEventHandler
 import com.crowdodge.shared.kernel.DomainEventPublisher
 import com.crowdodge.shared.kernel.ReadinessProbe
 import com.crowdodge.shared.kernel.TransactionRunner
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.application.port.TokenCipher
 import com.crowdodge.user.di.userModule
 import com.crowdodge.user.infrastructure.google.GoogleOAuthConfig
 import com.crowdodge.user.infrastructure.security.AesGcmTokenCipher
-import com.crowdodge.user.infrastructure.security.JwtAppTokenConfig
 import com.crowdodge.user.infrastructure.security.hmacAlgorithm
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.server.application.ApplicationEnvironment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -39,11 +45,12 @@ import org.koin.dsl.onClose
 fun appModule(environment: ApplicationEnvironment): Module {
     val databaseConfig = environment.databaseConfig()
     val googleOAuthConfig = environment.googleOAuthConfig()
+    val googleCalendarConfig = environment.googleCalendarConfig()
     val jwtAppTokenConfig = environment.jwtAppTokenConfig().also { it.hmacAlgorithm() }
     val tokenCipher = AesGcmTokenCipher(environment.googleTokenEncryptionKey())
 
     return module {
-        includes(userModule())
+        includes(userModule(), eventModule())
 
         single<DatabaseConfig> { databaseConfig }
         // Koin 停止（ApplicationStopping）時に onClose でプールを破棄する。
@@ -59,10 +66,16 @@ fun appModule(environment: ApplicationEnvironment): Module {
                 scope = get(),
             )
         }
-        single<HttpClient> { HttpClient(CIO) } onClose { it?.close() }
+        single<HttpClient> {
+            HttpClient(CIO) {
+                install(HttpTimeout)
+            }
+        } onClose { it?.close() }
 
         single<GoogleOAuthConfig> { googleOAuthConfig }
+        single<GoogleCalendarConfig> { googleCalendarConfig }
         single<JwtAppTokenConfig> { jwtAppTokenConfig }
         single<TokenCipher> { tokenCipher }
+        single<CalendarConnectionProvider> { UserCalendarConnectionAdapter(get()) }
     }
 }
