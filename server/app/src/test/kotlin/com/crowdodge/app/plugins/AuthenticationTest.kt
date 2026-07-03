@@ -13,6 +13,7 @@ import com.crowdodge.user.application.port.AppTokenPort
 import com.crowdodge.user.application.port.GoogleAuthorization
 import com.crowdodge.user.application.port.GoogleIdentity
 import com.crowdodge.user.application.port.GoogleOAuthGateway
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.domain.error.UserError
 import com.crowdodge.user.domain.model.AuthRefreshTokenHash
 import com.crowdodge.user.domain.model.GoogleId
@@ -27,7 +28,6 @@ import com.crowdodge.user.domain.repository.UserCalendarRepository
 import com.crowdodge.user.domain.repository.UserGoogleCredentialRepository
 import com.crowdodge.user.domain.repository.UserRepository
 import com.crowdodge.user.infrastructure.security.JwtAppTokenAdapter
-import com.crowdodge.user.infrastructure.security.JwtAppTokenConfig
 import com.crowdodge.user.presentation.APP_JWT_AUTH_NAME
 import com.crowdodge.user.presentation.configureUserRouting
 import io.kotest.assertions.throwables.shouldThrow

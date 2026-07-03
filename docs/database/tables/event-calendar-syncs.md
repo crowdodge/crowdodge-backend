@@ -33,3 +33,4 @@ Google カレンダー取り込みの同期状態と watch 状態を保持する
 
 - `watch_expiration` は再登録対象の抽出に使う。
 - コンテキスト間の物理外部キーは張らず、`user_calendar_uuid` を値として保持する。
+- 予定反映、ドメインイベント発行、`sync_token` と `materialized_until` の更新は同一トランザクションで行う。

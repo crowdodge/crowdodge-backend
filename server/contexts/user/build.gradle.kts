@@ -30,7 +30,10 @@ dependencies {
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.arrow)
     testImplementation(libs.kotest.property)
+    testImplementation(libs.kotest.extensions.testcontainers)
     testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.postgresql)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

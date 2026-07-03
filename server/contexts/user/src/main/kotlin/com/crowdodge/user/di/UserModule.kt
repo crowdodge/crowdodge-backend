@@ -4,14 +4,19 @@ import com.crowdodge.user.application.command.AuthenticateWithGoogleUseCase
 import com.crowdodge.user.application.command.LogoutUseCase
 import com.crowdodge.user.application.command.RefreshSessionUseCase
 import com.crowdodge.user.application.port.AppTokenPort
+import com.crowdodge.user.application.port.GoogleCalendarCredentialStore
 import com.crowdodge.user.application.port.GoogleOAuthGateway
+import com.crowdodge.user.application.port.GoogleOAuthTokenRefreshGateway
 import com.crowdodge.user.application.port.TokenCipher
+import com.crowdodge.user.application.query.ResolveGoogleCalendarConnectionUseCase
+import com.crowdodge.user.application.service.GoogleAccessTokenProvider
 import com.crowdodge.user.domain.repository.UserAuthRefreshTokenRepository
 import com.crowdodge.user.domain.repository.UserCalendarRepository
 import com.crowdodge.user.domain.repository.UserDeviceRepository
 import com.crowdodge.user.domain.repository.UserGoogleCredentialRepository
 import com.crowdodge.user.domain.repository.UserRepository
 import com.crowdodge.user.domain.repository.UserSettingRepository
+import com.crowdodge.user.infrastructure.db.ExposedGoogleCalendarCredentialStore
 import com.crowdodge.user.infrastructure.db.ExposedUserAuthRefreshTokenRepository
 import com.crowdodge.user.infrastructure.db.ExposedUserCalendarRepository
 import com.crowdodge.user.infrastructure.db.ExposedUserDeviceRepository
@@ -28,12 +33,16 @@ fun userModule() = module {
     single<UserDeviceRepository> { ExposedUserDeviceRepository() }
     single<UserSettingRepository> { ExposedUserSettingRepository() }
     single<UserGoogleCredentialRepository> { ExposedUserGoogleCredentialRepository(get<TokenCipher>()) }
+    single<GoogleCalendarCredentialStore> { ExposedGoogleCalendarCredentialStore(get<TokenCipher>()) }
     single<UserAuthRefreshTokenRepository> { ExposedUserAuthRefreshTokenRepository() }
     single { GoogleOAuthTokenGateway(get(), get()) }
     single<GoogleOAuthGateway> { get<GoogleOAuthTokenGateway>() }
+    single<GoogleOAuthTokenRefreshGateway> { get<GoogleOAuthTokenGateway>() }
+    single { GoogleAccessTokenProvider(get(), get(), get()) }
     single { JwtAppTokenAdapter(get()) }
     single<AppTokenPort> { get<JwtAppTokenAdapter>() }
     single { AuthenticateWithGoogleUseCase(get(), get(), get(), get(), get(), get(), get()) }
+    single { ResolveGoogleCalendarConnectionUseCase(get(), get(), get()) }
     single { RefreshSessionUseCase(get(), get(), get()) }
     single { LogoutUseCase(get(), get(), get()) }
 }

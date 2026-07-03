@@ -36,6 +36,8 @@ private fun appEnvironment() = applicationEnvironment {
         "crowdodge.database.password" to "crowdodge",
         "crowdodge.database.sslMode" to "disable",
         "crowdodge.database.pgbouncer" to "false",
+        "crowdodge.googleCalendar.apiBaseUrl" to "https://www.googleapis.com",
+        "crowdodge.googleCalendar.fullSyncWindowDays" to "90",
         "crowdodge.googleCalendar.oauthTokenUrl" to "https://oauth2.googleapis.com/token",
         "crowdodge.googleCalendar.oauthJwksUrl" to "https://www.googleapis.com/oauth2/v3/certs",
         "crowdodge.googleCalendar.oauthClientId" to "client-id",

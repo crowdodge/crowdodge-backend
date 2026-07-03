@@ -1,9 +1,18 @@
 package com.crowdodge.app.calendar
 
+import com.crowdodge.event.infrastructure.google.GoogleCalendarConfig
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.infrastructure.google.GoogleOAuthConfig
-import com.crowdodge.user.infrastructure.security.JwtAppTokenConfig
 import io.ktor.server.application.ApplicationEnvironment
 import kotlin.time.Duration.Companion.seconds
+
+fun ApplicationEnvironment.googleCalendarConfig(): GoogleCalendarConfig {
+    val c = config.config("crowdodge.googleCalendar")
+    return GoogleCalendarConfig(
+        apiBaseUrl = c.property("apiBaseUrl").getString().trimEnd('/'),
+        fullSyncWindowDays = c.property("fullSyncWindowDays").getString().toInt(),
+    )
+}
 
 fun ApplicationEnvironment.googleOAuthConfig(): GoogleOAuthConfig {
     val c = config.config("crowdodge.googleCalendar")

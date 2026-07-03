@@ -13,7 +13,7 @@ Google カレンダーから取得した予定インスタンスを、サーバ�
 
 - Exposed定義あり。
 - `V3__change.sql` でマイグレーション反映済み。
-- Google Calendar API クライアント本体は未実装。
+- Google Calendar APIからの初回同期と差分同期は実装済み。
 
 ## 列
 

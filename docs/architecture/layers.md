@@ -38,5 +38,5 @@ presentation   infrastructure
 ## 現行実装
 
 - `infrastructure` の実装済み範囲は R2DBC、Exposed テーブル、DBリポジトリ、readiness probe、Domain Event配送が中心。
-- 外部APIクライアント、FCMは責務範囲だが未実装。
-- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe`、`DomainEventPublisher` を配線している。
+- Google OAuthとGoogle Calendarの外部APIクライアントは実装済み。FCMは責務範囲だが未実装。
+- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe`、`DomainEventPublisher`、BC間ACLを配線している。

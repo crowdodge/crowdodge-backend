@@ -9,8 +9,8 @@ import com.crowdodge.user.application.command.LogoutCommand
 import com.crowdodge.user.application.command.LogoutUseCase
 import com.crowdodge.user.application.command.RefreshSessionCommand
 import com.crowdodge.user.application.command.RefreshSessionUseCase
+import com.crowdodge.user.application.port.JwtAppTokenConfig
 import com.crowdodge.user.domain.error.UserError
-import com.crowdodge.user.infrastructure.security.JwtAppTokenConfig
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.auth.authenticate

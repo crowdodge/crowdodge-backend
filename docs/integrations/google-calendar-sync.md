@@ -3,18 +3,23 @@
 ## 更新対象
 
 - Google Calendar API の同期、watch、同期窓、識別子を変更した場合に更新する。
-- 関連テーブルを変更した場合は `../database/tables/events.md` と `../database/tables/event-calendar-syncs.md` も更新する。
+- 同期状態を変更した場合は `../database/tables/event-calendar-syncs.md` も更新する。
+- 予定投影を変更した場合は `../database/tables/events.md` も更新する。
+- Google 認証と資格情報は [Google認証とアプリセッション](google-auth.md) に従う。
 
 ## 実装状況
 
-- 実装済み: 同期ユースケース、同期ポート、watch状態参照ポート、同期進捗DBアダプタ、予定投影リポジトリ。
-- 未実装: Google Calendar API クライアント本体、watch登録・更新ジョブ、Googleへの予定書き込み、FCM同期ヒント送信。
+- 実装済み: Google Calendar API クライアント、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影。
+- 未実装: watch登録・更新ジョブ、Webhook受信ルート、予定ドメインイベントの下流購読者。
 
 ## 基本方針
 
-- カレンダーの Source of Truth は Google カレンダーとする。
-- 繰り返しルールと例外展開は Google が所有する。
-- サーバは繰り返しルールを保持しない。
+- カレンダーの Source of Truth は Google Calendar とする。
+- カレンダー同期は読み取り専用とし、Google Calendar への予定書き込みは行わない。
+- Google カレンダーと OAuth 認証情報は user BC が所有する。
+- 予定と同期進捗は event BC が所有する。
+- event BC は app 層の `UserCalendarConnectionAdapter` を ACL として使用し、user BC のテーブルを直接参照しない。
+- 繰り返しルールと例外展開は Google が所有し、サーバは保持しない。
 - サーバは `singleEvents=true` で展開された予定インスタンスを `events` に投影する。
 - サーバは `materialized_until` までのローリング窓に含まれる予定だけを保持する。
 
@@ -27,6 +32,15 @@
 | `original_start` | Google | 発生回の元の開始時刻 |
 | `user_calendar_uuid` | user BC | 同期対象カレンダーの識別子 |
 
+## BC間連携
+
+event BC は `CalendarConnectionProvider` からカレンダー ID と有効な access token を取得する。
+app 層の `UserCalendarConnectionAdapter` は event BC の `UserCalendarUuid` を user BC の
+`UserCalendarUuid` へ変換し、`ResolveGoogleCalendarConnectionUseCase` を呼び出す。
+
+user BC は保存済み scope を検証し、access token の失効まで1分以内なら refresh token を使って更新する。
+更新した access token と有効期限は `user_google_credentials` へ保存する。
+
 ## 同期状態
 
 - 同期状態は `event_calendar_syncs` に保持する。
@@ -34,24 +48,31 @@
 - `materialized_until` はサーバ投影の将来端として扱う。
 - `watch_channel_id` は webhook 受信時に `user_calendar_uuid` を逆引きするために使う。
 
-## webhook 起点の同期
+## 同期処理
 
-`SyncCalendarUseCase.handle(channelId)` は次の順序で処理する。
+`GoogleCalendarEventSynchronizer` は初回同期、差分同期、明示された期間のフル同期を同じ予定反映処理で扱う。
 
-1. `CalendarWatchPort.findByChannelId(channelId)` で同期対象の `user_calendar_uuid` を取得する。
-2. 対象が見つからない場合は何もしない。
-3. `CalendarSyncProgressPort` から `sync_token` と `materialized_until` を読む。
-4. `materialized_until` が NULL の場合は Google API を呼ばず何もしない。
-5. `CalendarSyncGateway.fetchUpdatedEvents(userCalendarUuid, syncToken)` をトランザクション外で呼ぶ。
-6. 取得結果をトランザクション内で `events` に反映し、ドメインイベントを発行する。
-7. 反映成功後、別トランザクションで `sync_token` を更新する。
+1. `event_calendar_syncs` から `sync_token` と `materialized_until` を読む。
+2. user BC からカレンダー ID と有効な access token を取得する。
+3. Google Calendar API をトランザクション外で呼ぶ。
+4. 同期状態をロックし、取得開始時の `sync_token` と `materialized_until` が現在値と一致することを確認する。
+5. 予定反映、ドメインイベント発行、`sync_token` と `materialized_until` の更新を同一トランザクションで確定する。
+6. 同期状態が変化していた場合は取得結果を破棄し、最新状態から再実行する。
+
+`materialized_until` が NULL、または同期状態が存在しない場合は Google API を呼ばず何もしない。
+
+## 初回同期
+
+`syncToken` がない場合は `singleEvents=true`、`showDeleted=true`、`maxResults=2500`、
+`timeMin=同期処理開始時刻`、`timeMax=materialized_until` で `events.list` を呼ぶ。
+`nextPageToken` がある間は全ページを取得し、最終ページの `nextSyncToken` を保存する。
 
 ## 増分同期
 
-- 通常同期では `sync_token` を Google Calendar API へ渡す。
-- `sync_token` が失効した場合、ACL実装はフル同期へフォールバックし、`CalendarSyncResult.isFullSync = true` を返す。
-- 増分同期では Google API の仕様上 `syncToken` と `timeMin` / `timeMax` を併用できない。
-- 窓外予定の除外は `SyncCalendarUseCase` が行う。
+- 保存済み `syncToken` を `events.list` へ渡す。
+- Google の制約により、`syncToken` と `timeMin` / `timeMax` は併用しない。
+- `showDeleted=true` としてキャンセルされた予定を取得する。
+- Google が `410 Gone` を返した場合、同じ処理内で初回同期へフォールバックする。
 
 ## ローリング窓
 
@@ -60,6 +81,23 @@
 - 予定が窓に含まれる条件は `schedule.start() < windowEnd && schedule.end() > windowStart` とする。
 - 窓外の incoming 予定は保存しない。
 - 既存予定が窓外へ移動した場合は削除する。
+
+## Google Event変換
+
+| Google Calendar | Crowdodge |
+|---|---|
+| `id` | `googleEventId` |
+| `recurringEventId` | `recurringEventId` |
+| `originalStartTime` | `originalStart` |
+| `summary` | title |
+| `description` | description |
+| `location` | location |
+| `start` / `end` | schedule |
+| 最初の正の reminder override | remind timing |
+
+- 日時指定と終日予定を扱う。
+- 不正または未対応の時刻形式は同期失敗として扱う。
+- `status=cancelled` は削除対象として扱う。
 
 ## 差分反映
 
@@ -74,21 +112,29 @@
 | 窓外退避 | delete | `EventCancelled` |
 | フル同期結果に存在しない既存予定 | delete | `EventCancelled` |
 
-## 冪等性
+## 冪等性とトランザクション
 
+- Google API は DB トランザクション外で呼ぶ。
 - `events` は `(user_calendar_uuid, google_event_id)` を競合キーとして upsert する。
-- upsert時、既存の `event_uuid` と `created_at` は保持する。
-- 変更がない incoming 予定は upsert せず、イベントも発行しない。
-- `sync_token` は予定反映が成功した後にだけ前進させる。
-- `sync_token` 更新に失敗した場合、次回同じ変更を再取得し得るが、無変化判定により重複イベントを抑制する。
+- upsert 時、既存の `event_uuid` と `created_at` は保持する。
+- 変更がない予定は upsert せず、ドメインイベントも発行しない。
+- 予定反映、ドメインイベント発行、`sync_token` 更新、`materialized_until` 更新は同一トランザクションで行う。
+
+## エラー
+
+- Calendar API の connect、socket、request timeout は `GoogleCalendarTimeoutError` として扱う。
+- OAuth token endpoint の失敗は `GoogleOAuthError` として扱う。
+- coroutine cancellation は外部連携エラーへ変換せず再送出する。
+
+## 環境変数
+
+| 変数 | 用途 | 既定値 |
+|---|---|---|
+| `GOOGLE_CALENDAR_API_BASE_URL` | Calendar API の base URL | `https://www.googleapis.com` |
+| `GOOGLE_CALENDAR_FULL_SYNC_WINDOW_DAYS` | 初回取得と投影対象の日数 | `90` |
 
 ## watch
 
 - webhook 受信時は `X-Goog-Channel-ID` 相当の `channelId` で `event_calendar_syncs.watch_channel_id` を逆引きする。
 - `watch_resource_id`、`watch_channel_token`、`watch_expiration` は保存列のみ存在する。
 - watch登録、検証、再登録ジョブは未実装。
-
-## 書き込み
-
-- Google Calendar への予定書き込みは未実装。
-- 書き込み時の競合解決、`etag` 保存、Googleから戻る webhook の無限ループ防止は未確定。

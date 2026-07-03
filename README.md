@@ -89,6 +89,8 @@ task format   # 整形を自動修正（= ./gradlew detekt --auto-correct）
 | `MIGRATION_DB_NAME` | Flyway 用 DB 名 | `crowdodge` |
 | `MIGRATION_DB_USER` / `MIGRATION_DB_PASSWORD` | Flyway 用 DB 認証情報 | `crowdodge` / `crowdodge` |
 | `MIGRATION_DB_SSL_MODE` | Flyway 用 DB 接続の SSL mode | `disable` |
+| `GOOGLE_CALENDAR_API_BASE_URL` | Google Calendar API base URL | `https://www.googleapis.com` |
+| `GOOGLE_CALENDAR_FULL_SYNC_WINDOW_DAYS` | Google Calendar の同期対象日数 | `90` |
 | `GOOGLE_OAUTH_TOKEN_URL` | Google OAuth token endpoint | `https://oauth2.googleapis.com/token` |
 | `GOOGLE_OAUTH_JWKS_URL` | Google JWKS endpoint | `https://www.googleapis.com/oauth2/v3/certs` |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID | 空 |

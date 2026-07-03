@@ -51,5 +51,9 @@ sealed interface EventError : DomainError {
         data object GoogleCalendarError : ExternalError {
             override val code: String = "google-calendar-error"
         }
+
+        data object GoogleCalendarTimeoutError : ExternalError {
+            override val code: String = "google-calendar-timeout"
+        }
     }
 }

@@ -15,12 +15,12 @@
    - ヘルスチェック
 2. user
    - 状態: 一部実装済み
-   - 実装済み: ドメインモデル、リポジトリ、テーブル、マイグレーション、Google サインイン、認証 presentation API
+   - 実装済み: ドメインモデル、リポジトリ、テーブル、マイグレーション、Google サインイン、認証 presentation API、同期用access token更新
    - 未実装: Google Calendar API プロキシ、カレンダー一覧取得、選択更新
 3. event
    - 状態: 一部実装済み
-   - 実装済み: 予定投影モデル、同期ユースケース、リポジトリ、テーブル、マイグレーション
-   - 未実装: Google Calendar API クライアント、watch登録ジョブ、presentation API
+   - 実装済み: 予定投影モデル、同期サービス、Google Calendar APIクライアント、リポジトリ、テーブル、マイグレーション
+   - 未実装: watch登録ジョブ、presentation API
 4. destination
    - 状態: 未実装
    - Exposed テーブル定義のみ存在する
