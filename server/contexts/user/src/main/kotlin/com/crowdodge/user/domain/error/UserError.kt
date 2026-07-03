@@ -51,6 +51,42 @@ sealed interface UserError : DomainError {
             override val name: String = "fcm_token"
             override val code: String = "blank-fcm-token"
         }
+
+        /** Google Subject が空。 */
+        data object BlankGoogleSubject : ValidationError {
+            override val name: String = "google_subject"
+            override val code: String = "blank-google-subject"
+        }
+
+        /** Google access token が空。 */
+        data object BlankGoogleAccessToken : ValidationError {
+            override val name: String = "access_token"
+            override val code: String = "blank-google-access-token"
+        }
+
+        /** Google refresh token が空。 */
+        data object BlankGoogleRefreshToken : ValidationError {
+            override val name: String = "refresh_token"
+            override val code: String = "blank-google-refresh-token"
+        }
+
+        /** Google OAuth scope 群が空。 */
+        data object BlankGrantedGoogleScopes : ValidationError {
+            override val name: String = "granted_scopes"
+            override val code: String = "blank-granted-google-scopes"
+        }
+
+        /** 認証 refresh token hash が空。 */
+        data object BlankAuthRefreshTokenHash : ValidationError {
+            override val name: String = "token_hash"
+            override val code: String = "blank-auth-refresh-token-hash"
+        }
+
+        /** 認証 refresh token hash が 64 文字でない。 */
+        data object InvalidAuthRefreshTokenHash : ValidationError {
+            override val name: String = "token_hash"
+            override val code: String = "invalid-auth-refresh-token-hash"
+        }
     }
     sealed interface ConflictError : UserError {
         data object DuplicateEmail : ConflictError {
@@ -60,6 +96,26 @@ sealed interface UserError : DomainError {
         /** 同一ユーザーが同一カレンダーを重複選択した（UNIQUE(user_uuid, google_calendar_id)）。 */
         data object DuplicateCalendar : ConflictError {
             override val code: String = "duplicate-calendar"
+        }
+    }
+
+    sealed interface AuthenticationError : UserError {
+        data object InvalidGoogleToken : AuthenticationError {
+            override val code: String = "invalid-google-token"
+        }
+
+        data object MissingGoogleScope : AuthenticationError {
+            override val code: String = "missing-google-scope"
+        }
+
+        data object InvalidRefreshToken : AuthenticationError {
+            override val code: String = "invalid-refresh-token"
+        }
+    }
+
+    sealed interface ExternalError : UserError {
+        data object GoogleOAuthError : ExternalError {
+            override val code: String = "google-oauth-error"
         }
     }
 }

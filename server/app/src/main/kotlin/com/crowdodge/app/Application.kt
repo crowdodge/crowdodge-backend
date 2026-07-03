@@ -1,10 +1,12 @@
 package com.crowdodge.app
 
+import com.crowdodge.app.plugins.configureAuthentication
 import com.crowdodge.app.plugins.configureKoin
 import com.crowdodge.app.plugins.configureMonitoring
 import com.crowdodge.app.plugins.configureRouting
 import com.crowdodge.app.plugins.configureSerialization
 import com.crowdodge.app.plugins.configureStatusPages
+import com.crowdodge.user.presentation.configureUserRouting
 import io.ktor.server.application.Application
 
 /**
@@ -18,7 +20,9 @@ fun Application.module() {
     configureKoin()
     // StatusPages は下流プラグイン/ハンドラの例外を広く捕捉できるよう早期に install する。
     configureStatusPages()
-    configureMonitoring()
     configureSerialization()
+    configureMonitoring()
+    configureAuthentication()
     configureRouting()
+    configureUserRouting()
 }

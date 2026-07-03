@@ -71,7 +71,7 @@ task format   # 整形を自動修正（= ./gradlew detekt --auto-correct）
 
 レポートは SARIF のみ出力し、各モジュール分を `server/build/reports/detekt/merged.sarif` に統合する。
 
-### DB 接続設定
+### アプリ設定
 
 `server/app/src/main/resources/application.conf` の既定値を環境変数で上書きできる。
 
@@ -82,6 +82,23 @@ task format   # 整形を自動修正（= ./gradlew detekt --auto-correct）
 | `DB_PORT` | DB ポート | `5432` |
 | `DB_NAME` | DB 名 | `crowdodge` |
 | `DB_USER` / `DB_PASSWORD` | DB 認証情報（URL に埋め込まず分離して注入） | `crowdodge` / `crowdodge` |
+| `DB_SSL_MODE` | アプリ DB 接続の SSL mode | `disable` |
+| `DB_PGBOUNCER` | PgBouncer transaction pooler 向け設定 | `false` |
+| `MIGRATION_DB_HOST` | Flyway 用 DB ホスト | `localhost` |
+| `MIGRATION_DB_PORT` | Flyway 用 DB ポート | `5432` |
+| `MIGRATION_DB_NAME` | Flyway 用 DB 名 | `crowdodge` |
+| `MIGRATION_DB_USER` / `MIGRATION_DB_PASSWORD` | Flyway 用 DB 認証情報 | `crowdodge` / `crowdodge` |
+| `MIGRATION_DB_SSL_MODE` | Flyway 用 DB 接続の SSL mode | `disable` |
+| `GOOGLE_OAUTH_TOKEN_URL` | Google OAuth token endpoint | `https://oauth2.googleapis.com/token` |
+| `GOOGLE_OAUTH_JWKS_URL` | Google JWKS endpoint | `https://www.googleapis.com/oauth2/v3/certs` |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID | 空 |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | 空 |
+| `GOOGLE_TOKEN_ENCRYPTION_KEY` | Google access token / refresh token 暗号化キー | 空 |
+| `APP_JWT_SECRET` | アプリ access token 署名 secret | 空 |
+| `APP_JWT_ISSUER` | アプリ access token issuer | `crowdodge-api` |
+| `APP_JWT_AUDIENCE` | アプリ access token audience | `crowdodge-app` |
+| `APP_JWT_ACCESS_TTL_SECONDS` | アプリ access token TTL 秒 | `900` |
+| `APP_JWT_REFRESH_TTL_SECONDS` | アプリ refresh token TTL 秒 | `2592000` |
 
 ## ヘルスチェック
 

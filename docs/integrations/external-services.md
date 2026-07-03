@@ -6,10 +6,15 @@
 
 ## Google Calendar
 
-- 用途は予定の読み取り、予定の書き込み、変更検知とする。
-- Google Calendar API クライアント本体は未実装。
-- OAuth2 認証処理は未実装。
-- 詳細仕様は [Google カレンダー同期](google-calendar-sync.md) に従う。
+- 用途はGoogleアカウント認証、予定の読み取り、予定の書き込み、変更検知とする。
+- OAuth2 authorization code flowとPKCEで認可コードを交換する。
+- 必須scopeは `https://www.googleapis.com/auth/calendar.events` と `https://www.googleapis.com/auth/calendar.calendarlist.readonly` とする。
+- Google ID tokenはGoogle JWKSで検証する。
+- Google access tokenとrefresh tokenはAES-256-GCMで暗号化して保存する。
+- Calendar Events API プロキシは内容を解釈・保存せず、Googleのレスポンスを転送する。
+- 同期処理は既定90日窓の予定を `events` に保存する。
+- Google認証とアプリセッションの詳細仕様は [Google認証とアプリセッション](google-auth.md) に従う。
+- Google Calendar同期の詳細仕様は [Google カレンダー同期](google-calendar-sync.md) に従う。
 
 ## Gemini API
 
