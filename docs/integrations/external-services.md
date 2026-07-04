@@ -15,6 +15,7 @@
 - 同期処理は既定90日窓の予定を `events` に保存する。
 - Google認証とアプリセッションの詳細仕様は [Google認証とアプリセッション](google-auth.md) に従う。
 - Google Calendar同期の詳細仕様は [Google カレンダー同期](google-calendar-sync.md) に従う。
+- Calendar Events API プロキシの詳細仕様は [Calendar Events API プロキシ](google-calendar-proxy.md) に従う。
 
 ## Gemini API
 

@@ -6,9 +6,11 @@ import com.crowdodge.user.application.command.RefreshSessionUseCase
 import com.crowdodge.user.application.port.AppTokenPort
 import com.crowdodge.user.application.port.GoogleCalendarCredentialStore
 import com.crowdodge.user.application.port.GoogleCalendarListGateway
+import com.crowdodge.user.application.port.GoogleCalendarProxyGateway
 import com.crowdodge.user.application.port.GoogleOAuthGateway
 import com.crowdodge.user.application.port.GoogleOAuthTokenRefreshGateway
 import com.crowdodge.user.application.port.TokenCipher
+import com.crowdodge.user.application.query.ProxyGoogleCalendarUseCase
 import com.crowdodge.user.application.query.ResolveGoogleCalendarConnectionUseCase
 import com.crowdodge.user.application.service.GoogleAccessTokenProvider
 import com.crowdodge.user.application.service.UserCalendarSelectionService
@@ -27,6 +29,7 @@ import com.crowdodge.user.infrastructure.db.ExposedUserRepository
 import com.crowdodge.user.infrastructure.db.ExposedUserSettingRepository
 import com.crowdodge.user.infrastructure.google.GoogleOAuthTokenGateway
 import com.crowdodge.user.infrastructure.google.KtorGoogleCalendarListGateway
+import com.crowdodge.user.infrastructure.google.KtorGoogleCalendarProxyGateway
 import com.crowdodge.user.infrastructure.security.JwtAppTokenAdapter
 import org.koin.dsl.module
 
@@ -41,6 +44,9 @@ fun userModule(googleCalendarApiBaseUrl: String) = module {
     single { GoogleOAuthTokenGateway(get(), get()) }
     single<GoogleOAuthGateway> { get<GoogleOAuthTokenGateway>() }
     single<GoogleOAuthTokenRefreshGateway> { get<GoogleOAuthTokenGateway>() }
+    single<GoogleCalendarProxyGateway> {
+        KtorGoogleCalendarProxyGateway(get(), googleCalendarApiBaseUrl)
+    }
     single { GoogleAccessTokenProvider(get(), get(), get()) }
     single<GoogleCalendarListGateway> {
         KtorGoogleCalendarListGateway(get(), googleCalendarApiBaseUrl, get())
@@ -50,6 +56,7 @@ fun userModule(googleCalendarApiBaseUrl: String) = module {
     single { AuthenticateWithGoogleUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { ResolveGoogleCalendarConnectionUseCase(get(), get(), get()) }
     single { UserCalendarSelectionService(get(), get(), get(), get()) }
+    single { ProxyGoogleCalendarUseCase(get(), get(), get(), get(), get()) }
     single { RefreshSessionUseCase(get(), get(), get()) }
     single { LogoutUseCase(get(), get(), get()) }
 }

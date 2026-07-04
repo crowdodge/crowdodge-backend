@@ -5,6 +5,7 @@ import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleServic
 import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
 import com.crowdodge.shared.kernel.DomainEventPublisher
 import com.crowdodge.shared.kernel.TransactionRunner
+import com.crowdodge.user.application.query.ProxyGoogleCalendarUseCase
 import com.crowdodge.user.application.service.UserCalendarSelectionService
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -35,6 +36,8 @@ class AppModuleTest : FunSpec({
                 .shouldBeInstanceOf<GoogleCalendarSyncLifecycleService>()
             koin.get<MaintainGoogleCalendarSyncCoordinator>()
                 .shouldBeInstanceOf<MaintainGoogleCalendarSyncCoordinator>()
+            koin.get<ProxyGoogleCalendarUseCase>()
+                .shouldBeInstanceOf<ProxyGoogleCalendarUseCase>()
         } finally {
             koinApplication.close()
         }
