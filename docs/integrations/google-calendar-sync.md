@@ -9,8 +9,8 @@
 
 ## 実装状況
 
-- 実装済み: Google Calendar API クライアント、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影、Webhook受信ルート。
-- 未実装: watch登録・更新ジョブ、予定ドメインイベントの下流購読者。
+- 実装済み: Google Calendar API クライアント、watch登録、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影、Webhook受信ルート、watch期限前更新ジョブ。
+- 未実装: 予定ドメインイベントの下流購読者。
 
 ## 基本方針
 
@@ -131,15 +131,34 @@ user BC は保存済み scope を検証し、access token の失効まで1分以
 | 変数 | 用途 | 既定値 |
 |---|---|---|
 | `GOOGLE_CALENDAR_API_BASE_URL` | Calendar API の base URL | `https://www.googleapis.com` |
+| `GOOGLE_CALENDAR_WEBHOOK_URL` | Google Calendar watch の通知先URL | なし |
+| `GOOGLE_CALENDAR_CHANNEL_TOKEN` | webhook通知のchannel token | なし |
 | `GOOGLE_CALENDAR_FULL_SYNC_WINDOW_DAYS` | 初回取得と投影対象の日数 | `90` |
 
 ## watch
 
+- watch登録は `events.watch` を呼び、`event_calendar_syncs` に channel ID、resource ID、channel token、有効期限を保存する。
+- watch停止は `channels.stop` を呼ぶ。停止失敗は予定削除や同期状態削除を妨げない。
 - `POST /webhooks/google-calendar` で Google Calendar webhook 通知を受ける。
 - `X-Goog-Channel-ID` と `X-Goog-Resource-State` は必須とし、不足時は `400 Bad Request` を返す。
 - `X-Goog-Resource-State: sync` は同期せず `204 No Content` を返す。
 - `X-Goog-Resource-State: exists` の場合、`X-Goog-Channel-ID` で `event_calendar_syncs.watch_channel_id` を逆引きする。
 - 保存済み `watch_channel_token` と `X-Goog-Channel-Token` が一致しない場合は同期せず `204 No Content` を返す。
 - 登録済み channel で token が一致した場合は増分同期を実行し、成功時は `204 No Content`、同期失敗時は `502 Bad Gateway` を返す。
-- `watch_resource_id`、`watch_channel_token`、`watch_expiration` は保存列のみ存在する。
-- watch登録と再登録ジョブは未実装。
+- `watch_resource_id`、`watch_channel_token`、`watch_expiration` は watch停止、token検証、期限前更新に使う。
+
+## 定期整合・watch更新
+
+`renewGoogleCalendarWatches` はHTTPサーバを起動せず、Google Calendar選択状態と同期状態の整合を1回実行する。
+
+- 選択済みで同期状態がないカレンダーはwatchを登録し、初回同期する。
+- `syncToken` がない選択済みカレンダーは初回同期する。
+- 選択されていない同期状態はwatch停止、保存予定削除、同期状態削除を行う。
+- Calendar Listでowner/writer権限を確認できなくなった選択はuser BCの選択を解除し、watch停止、保存予定削除、同期状態削除を行う。
+- user BCの選択解除に失敗したカレンダーは、event BCの同期状態と保存予定を残す。
+- `watch_expiration` が24時間以内のwatchは更新対象とする。
+- watch更新時は新watchを登録し、現在時刻から同期対象日数後までをフル同期した後にwatch情報を置き換える。
+- watch情報の置き換えに成功した場合、旧watchをベストエフォートで停止する。
+- watch更新に失敗した場合、旧watch情報と同期状態を維持し、他カレンダーの処理を続ける。
+
+運用手順は [Google Calendar Watch Renewal Job](../operations/google-calendar-watch-renewal.md) に従う。

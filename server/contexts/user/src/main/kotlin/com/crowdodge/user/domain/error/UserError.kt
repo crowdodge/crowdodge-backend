@@ -117,5 +117,9 @@ sealed interface UserError : DomainError {
         data object GoogleOAuthError : ExternalError {
             override val code: String = "google-oauth-error"
         }
+
+        data object GoogleCalendarTimeoutError : ExternalError {
+            override val code: String = "google-calendar-timeout"
+        }
     }
 }

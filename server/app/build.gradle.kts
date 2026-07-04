@@ -80,3 +80,10 @@ tasks.register<JavaExec>("generateMigration") {
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = "com.crowdodge.app.migration.GenerateMigrationMainKt"
 }
+
+tasks.register<JavaExec>("renewGoogleCalendarWatches") {
+    group = "application"
+    description = "Google Calendar watchの整合・更新を1回実行する"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.crowdodge.app.calendar.GoogleCalendarWatchRenewalMainKt"
+}

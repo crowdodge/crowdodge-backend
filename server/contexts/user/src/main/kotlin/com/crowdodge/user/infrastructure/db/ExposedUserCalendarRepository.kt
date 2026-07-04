@@ -55,6 +55,11 @@ class ExposedUserCalendarRepository : UserCalendarRepository {
             .map { toDomain(it) }
             .toList()
 
+    override suspend fun findAll(): List<UserCalendar> =
+        UserCalendarsTable.selectAll()
+            .map { toDomain(it) }
+            .toList()
+
     /**
      * 一意制約違反（SQLSTATE 23505 = UNIQUE(user_uuid, google_calendar_id)）だけを
      * [UserError.ConflictError.DuplicateCalendar] に変換する。FK 等の他の整合性違反や接続断は例外のまま透過（5xx）。

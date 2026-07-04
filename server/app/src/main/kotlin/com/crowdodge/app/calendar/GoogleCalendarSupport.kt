@@ -10,6 +10,12 @@ fun ApplicationEnvironment.googleCalendarConfig(): GoogleCalendarConfig {
     val c = config.config("crowdodge.googleCalendar")
     return GoogleCalendarConfig(
         apiBaseUrl = c.property("apiBaseUrl").getString().trimEnd('/'),
+        webhookUrl = c.property("webhookUrl").getString().also {
+            require(it.isNotBlank()) { "Google Calendar webhook URL must not be blank" }
+        },
+        channelToken = c.property("channelToken").getString().also {
+            require(it.isNotBlank()) { "Google Calendar channel token must not be blank" }
+        },
         fullSyncWindowDays = c.property("fullSyncWindowDays").getString().toInt(),
     )
 }

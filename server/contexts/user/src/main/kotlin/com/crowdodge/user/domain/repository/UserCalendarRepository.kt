@@ -18,4 +18,7 @@ interface UserCalendarRepository {
 
     /** 当該ユーザーが選択中のカレンダー一覧。 */
     suspend fun findByUserUuid(userUuid: UserUuid): List<UserCalendar>
+
+    /** 全ユーザーの選択中カレンダー一覧（Google Calendar watch 定期整合用）。 */
+    suspend fun findAll(): List<UserCalendar> = error("findAll is not implemented")
 }

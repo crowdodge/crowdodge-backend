@@ -11,7 +11,8 @@
 - ドメインモデル、エラー型、イベント、リポジトリ interface、Exposed リポジトリは実装済み。
 - GoogleカレンダーのOAuth認証情報取得とaccess token更新は実装済み。
 - Google認証、セッション発行・更新・失効、`/auth/*` のpresentationは実装済み。
-- Google Calendar APIプロキシ、カレンダー一覧取得、選択更新は未実装。
+- 定期整合用のGoogle Calendar List取得は実装済み。
+- Google Calendar APIプロキシ、利用者向けカレンダー一覧API、選択更新APIは未実装。
 
 ### 責務
 
@@ -38,7 +39,7 @@
 ### 実装状況
 
 - ドメインモデル、エラー型、イベント、同期サービス、同期ポート、Exposed リポジトリは実装済み。
-- Google Calendar APIクライアント、初回同期、差分同期、`syncToken`失効時のフル同期は実装済み。
+- Google Calendar APIクライアント、watch登録、初回同期、差分同期、`syncToken`失効時のフル同期、watch期限前更新は実装済み。
 - Google Calendar webhook 受信routeは実装済み。その他のpresentation層の業務APIは未実装。
 
 ### 責務

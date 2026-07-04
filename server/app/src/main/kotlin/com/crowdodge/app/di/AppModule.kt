@@ -1,5 +1,6 @@
 package com.crowdodge.app.di
 
+import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
 import com.crowdodge.app.calendar.UserCalendarConnectionAdapter
 import com.crowdodge.app.calendar.googleCalendarConfig
 import com.crowdodge.app.calendar.googleOAuthConfig
@@ -50,7 +51,7 @@ fun appModule(environment: ApplicationEnvironment): Module {
     val tokenCipher = AesGcmTokenCipher(environment.googleTokenEncryptionKey())
 
     return module {
-        includes(userModule(), eventModule())
+        includes(userModule(googleCalendarConfig.apiBaseUrl), eventModule())
 
         single<DatabaseConfig> { databaseConfig }
         // Koin 停止（ApplicationStopping）時に onClose でプールを破棄する。
@@ -77,5 +78,6 @@ fun appModule(environment: ApplicationEnvironment): Module {
         single<JwtAppTokenConfig> { jwtAppTokenConfig }
         single<TokenCipher> { tokenCipher }
         single<CalendarConnectionProvider> { UserCalendarConnectionAdapter(get()) }
+        single { MaintainGoogleCalendarSyncCoordinator(get(), get()) }
     }
 }

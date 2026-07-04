@@ -37,6 +37,7 @@
 ### 運用・非同期処理
 
 - [非同期処理と通知ジョブ](operations/async-processing.md)
+- [Google Calendar Watch Renewal Job](operations/google-calendar-watch-renewal.md)
 - [実装ロードマップ](operations/roadmap.md)
 - [未決事項](operations/open-issues.md)
 

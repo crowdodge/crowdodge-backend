@@ -209,6 +209,13 @@ private fun UserError.toProblem(): Problem = when (this) {
         title = "Bad Gateway",
         detail = "Google OAuth 連携に失敗しました",
     )
+
+    is UserError.ExternalError.GoogleCalendarTimeoutError -> Problem(
+        status = 504,
+        type = code,
+        title = "Gateway Timeout",
+        detail = "Google Calendar request timed out",
+    )
 }
 
 private fun validationProblem(violations: List<Problem.Violation>): Problem =
