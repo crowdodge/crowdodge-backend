@@ -143,7 +143,8 @@ user BC は保存済み scope を検証し、access token の失効まで1分以
 ## エラー
 
 - Calendar API の connect、socket、request timeout は `GoogleCalendarTimeoutError` として扱う。
-- OAuth token endpoint の失敗は `GoogleOAuthError` として扱う。
+- OAuth token endpoint の `invalid_grant` は `InvalidRefreshToken` として扱う。
+- OAuth token endpoint の connect、socket、request timeout は `GoogleCalendarTimeoutError` として扱い、その他の失敗は `GoogleOAuthError` として扱う。
 - coroutine cancellation は外部連携エラーへ変換せず再送出する。
 
 ## 環境変数

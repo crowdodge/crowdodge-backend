@@ -192,6 +192,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
     }
 
     listOf(
+        UserError.AuthenticationError.InvalidRefreshToken to HttpStatusCode.Unauthorized,
         UserError.ExternalError.GoogleOAuthError to HttpStatusCode.BadGateway,
         UserError.ExternalError.GoogleCalendarTimeoutError to HttpStatusCode.GatewayTimeout,
     ).forEach { (refreshFailure, expectedStatus) ->
@@ -312,7 +313,7 @@ private class SelectionRouteFixture(
         "https://www.googleapis.com/auth/calendar.events " +
             "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
     accessTokenExpiresAt: Instant = RouteFixedClock.now() + 1.hours,
-    refreshFailure: UserError.ExternalError? = null,
+    refreshFailure: UserError? = null,
 ) {
     val repository = RouteUserCalendarRepository(userUuid)
     val watches = RouteWatchGateway()

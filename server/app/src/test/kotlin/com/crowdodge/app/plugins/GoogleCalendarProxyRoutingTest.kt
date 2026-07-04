@@ -251,6 +251,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
     }
 
     listOf(
+        UserError.AuthenticationError.InvalidRefreshToken to HttpStatusCode.Unauthorized,
         UserError.ExternalError.GoogleOAuthError to HttpStatusCode.BadGateway,
         UserError.ExternalError.GoogleCalendarTimeoutError to HttpStatusCode.GatewayTimeout,
     ).forEach { (refreshFailure, expectedStatus) ->
@@ -321,7 +322,7 @@ private fun Application.configureForProxyTest(
     userUuid: UserUuid,
     selectedCalendarIds: List<String> = listOf("cal/id"),
     accessTokenExpiresAt: Instant = Clock.System.now() + 1.hours,
-    refreshFailure: UserError.ExternalError? = null,
+    refreshFailure: UserError? = null,
 ) {
     val repository = FakeCredentialRepository(userUuid, accessTokenExpiresAt) {
         gateway.requestedUserUuid = it

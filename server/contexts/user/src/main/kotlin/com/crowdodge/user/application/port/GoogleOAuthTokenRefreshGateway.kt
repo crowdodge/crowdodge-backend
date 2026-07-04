@@ -10,5 +10,5 @@ data class RefreshedGoogleToken(
 )
 
 fun interface GoogleOAuthTokenRefreshGateway {
-    suspend fun refresh(refreshToken: String): Either<UserError.ExternalError, RefreshedGoogleToken>
+    suspend fun refresh(refreshToken: String): Either<UserError, RefreshedGoogleToken>
 }

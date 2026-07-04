@@ -12,6 +12,9 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.http.CacheControl
 import io.ktor.http.ContentType
@@ -27,6 +30,7 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.interfaces.RSAPublicKey
 import java.util.Base64
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 import java.time.Instant as JavaInstant
 
@@ -501,7 +505,7 @@ class GoogleOAuthGatewayTest : FunSpec({
             )
     }
 
-    test("refresh はinvalid_grant拒否をGoogleOAuthErrorへ変換する") {
+    test("refresh はinvalid_grant拒否をInvalidRefreshTokenへ変換する") {
         val gateway = GoogleOAuthTokenGateway(
             config = GoogleOAuthConfig(
                 tokenUrl = "https://oauth.example/token",
@@ -521,7 +525,8 @@ class GoogleOAuthGatewayTest : FunSpec({
             clock = fixedClock("2026-06-28T00:00:00Z"),
         )
 
-        gateway.refresh("google-refresh").leftOrNull() shouldBe UserError.ExternalError.GoogleOAuthError
+        gateway.refresh("google-refresh").leftOrNull() shouldBe
+            UserError.AuthenticationError.InvalidRefreshToken
     }
 
     test("refresh はinvalid_grant以外の400をGoogleOAuthErrorへ変換する") {
@@ -564,6 +569,53 @@ class GoogleOAuthGatewayTest : FunSpec({
         )
 
         gateway.refresh("google-refresh").leftOrNull() shouldBe UserError.ExternalError.GoogleOAuthError
+    }
+
+    listOf(
+        "socket" to { SocketTimeoutException("socket timeout") },
+        "connect" to { ConnectTimeoutException("connect timeout") },
+    ).forEach { (timeoutType, timeout) ->
+        test("refresh はCIO $timeoutType timeoutをGoogle Calendar timeoutへ変換する") {
+            val gateway = GoogleOAuthTokenGateway(
+                config = GoogleOAuthConfig(
+                    tokenUrl = "https://oauth.example/token",
+                    jwksUrl = "https://oauth.example/jwks",
+                    clientId = "google-client-id",
+                    clientSecret = "",
+                ),
+                httpClient = HttpClient(MockEngine { throw timeout() }),
+                clock = fixedClock("2026-06-28T00:00:00Z"),
+            )
+
+            gateway.refresh("google-refresh").leftOrNull() shouldBe
+                UserError.ExternalError.GoogleCalendarTimeoutError
+        }
+    }
+
+    test("refresh はHttpRequestTimeoutをGoogle Calendar timeoutへ変換する") {
+        val client = HttpClient(
+            MockEngine {
+                kotlinx.coroutines.delay(250)
+                respond("late", HttpStatusCode.OK)
+            },
+        ) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 10.milliseconds.inWholeMilliseconds
+            }
+        }
+        val gateway = GoogleOAuthTokenGateway(
+            config = GoogleOAuthConfig(
+                tokenUrl = "https://oauth.example/token",
+                jwksUrl = "https://oauth.example/jwks",
+                clientId = "google-client-id",
+                clientSecret = "",
+            ),
+            httpClient = client,
+            clock = fixedClock("2026-06-28T00:00:00Z"),
+        )
+
+        gateway.refresh("google-refresh").leftOrNull() shouldBe
+            UserError.ExternalError.GoogleCalendarTimeoutError
     }
 
     test("refresh は token endpoint 呼び出し中の CancellationException を再throwする") {

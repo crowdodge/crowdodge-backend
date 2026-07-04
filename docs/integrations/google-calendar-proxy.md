@@ -48,6 +48,8 @@ sharedExtendedProperty, updatedMin, syncToken
 - access token の失効まで1分以内の場合は、転送前に refresh token で更新する。
 - Google から `401 Unauthorized` を受けた場合は1回だけ refresh し、再試行する。
 - 資格情報がない、または更新に必要な refresh token がない場合は `401` を返す。
+- refresh token が無効な場合は再認証が必要な `401` を返す。
+- token endpoint の timeout は `504`、その他の更新失敗は `502` を返す。
 
 ## レスポンス
 

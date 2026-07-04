@@ -93,7 +93,10 @@ class GoogleAccessTokenProviderTest : FunSpec({
         refreshCount shouldBe 0
     }
 
-    listOf(UserError.ExternalError.GoogleOAuthError).forEach { refreshFailure ->
+    listOf(
+        UserError.AuthenticationError.InvalidRefreshToken,
+        UserError.ExternalError.GoogleOAuthError,
+    ).forEach { refreshFailure ->
         test("refresh失敗の${refreshFailure.code}を分類を保って返す") {
             val repository = FakeCredentialRepository(
                 credential(userUuid, "old", "2026-07-02T00:00:30Z"),
