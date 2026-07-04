@@ -47,10 +47,12 @@ import io.ktor.http.contentType
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.authenticate
+import io.ktor.server.request.ApplicationReceivePipeline
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.koin.dsl.module
@@ -132,6 +134,38 @@ class AuthenticationTest : FunSpec({
             response.status shouldBe HttpStatusCode.Unauthorized
             response.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
             response.bodyAsText() shouldContain "\"type\":\"invalid-google-token\""
+        }
+    }
+
+    test("POST /auth/google は request body 受信中のキャンセルを 400 Problem に変換しない") {
+        val cancellation = CancellationException("request receive cancelled")
+
+        testApplication {
+            application {
+                receivePipeline.intercept(ApplicationReceivePipeline.Transform) {
+                    throw cancellation
+                }
+                configureAuthenticationTestApp(
+                    now = now,
+                    jwtConfig = jwtConfig,
+                    googleOAuthGateway = FakeGoogleOAuthGateway(),
+                )
+            }
+
+            val response = client.post("/auth/google") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    """
+                    {
+                      "authorizationCode": "ok-code",
+                      "redirectUri": "com.crowdodge:/oauth2redirect",
+                      "codeVerifier": "pkce-verifier"
+                    }
+                    """.trimIndent(),
+                )
+            }
+
+            response.status shouldBe HttpStatusCode.InternalServerError
         }
     }
 
@@ -521,7 +555,8 @@ private class FakeGoogleOAuthGateway : GoogleOAuthGateway {
                     "openid",
                     "email",
                     "profile",
-                    "https://www.googleapis.com/auth/calendar.events.owned",
+                    "https://www.googleapis.com/auth/calendar.events",
+                    "https://www.googleapis.com/auth/calendar.calendarlist.readonly",
                 ),
             ),
         )

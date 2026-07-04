@@ -13,6 +13,7 @@ import com.crowdodge.user.domain.model.GrantedGoogleScopes.Companion.grantedGoog
 import com.crowdodge.user.domain.model.UserGoogleCredential
 import com.crowdodge.user.domain.repository.UserGoogleCredentialRepository
 import com.crowdodge.user.infrastructure.persistence.UserGoogleCredentialsTable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.firstOrNull
 import org.jetbrains.exposed.v1.core.ResultRow
 import org.jetbrains.exposed.v1.core.eq
@@ -83,6 +84,8 @@ class ExposedUserGoogleCredentialRepository(
                 )
             }
         } catch (e: PersistedDataCorruption) {
+            throw e
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             throw PersistedDataCorruption(

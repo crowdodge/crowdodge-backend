@@ -29,6 +29,12 @@
 - 暗号文は `v1.<base64url(nonce)>.<base64url(ciphertext)>` 形式とし、nonce は 12 バイトのセキュア乱数とする。
 - 付与済み scope はスペース区切りで保持する。
 
+## Google access token の更新
+
+- token endpoint の `invalid_grant` は再認証が必要な状態として扱う。
+- connect、socket、request timeout は Google Calendar timeout として扱う。
+- その他の token endpoint 失敗は Google OAuth error として扱う。
+
 ## 登録とログイン
 
 `POST /auth/google` は次の順序で処理する。

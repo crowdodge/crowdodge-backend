@@ -21,6 +21,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import org.koin.ktor.ext.inject
 
@@ -158,7 +159,10 @@ data class CurrentUserResponse(
 
 private suspend inline fun <reified T : Any> io.ktor.server.application.ApplicationCall.receiveOrProblem(): T? =
     runCatching { receive<T>() }
-        .getOrElse {
+        .getOrElse { exception ->
+            if (exception is CancellationException) {
+                throw exception
+            }
             respondProblem(
                 Problem(
                     status = 400,

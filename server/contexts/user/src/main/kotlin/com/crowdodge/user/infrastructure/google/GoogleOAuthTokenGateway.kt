@@ -13,12 +13,16 @@ import com.crowdodge.user.application.port.REQUIRED_GOOGLE_CALENDAR_SCOPES
 import com.crowdodge.user.application.port.RefreshedGoogleToken
 import com.crowdodge.user.domain.error.UserError
 import io.ktor.client.HttpClient
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
+import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
@@ -106,10 +110,10 @@ class GoogleOAuthTokenGateway(
         ).right()
     }
 
-    @Suppress("ReturnCount")
+    @Suppress("ReturnCount", "TooGenericExceptionCaught")
     override suspend fun refresh(
         refreshToken: String,
-    ): Either<UserError.ExternalError, RefreshedGoogleToken> {
+    ): Either<UserError, RefreshedGoogleToken> {
         val response = runCatching {
             httpClient.post(config.tokenUrl) {
                 setBody(
@@ -127,14 +131,26 @@ class GoogleOAuthTokenGateway(
             }
         }.getOrElse { exception ->
             exception.rethrowIfCancellation()
-            return oauthError()
+            return refreshRequestError(exception)
         }
-        if (!response.status.isSuccess()) return oauthError()
+        if (!response.status.isSuccess()) {
+            val rejected = if (response.status == HttpStatusCode.BadRequest) {
+                try {
+                    json.decodeFromString<TokenErrorResponse>(response.bodyAsText()).error == INVALID_GRANT
+                } catch (exception: Throwable) {
+                    exception.rethrowIfCancellation()
+                    return refreshRequestError(exception)
+                }
+            } else {
+                false
+            }
+            return if (rejected) invalidRefreshToken() else oauthError()
+        }
         val token = runCatching {
             json.decodeFromString<RefreshTokenResponse>(response.bodyAsText())
         }.getOrElse { exception ->
             exception.rethrowIfCancellation()
-            return oauthError()
+            return refreshRequestError(exception)
         }
         return RefreshedGoogleToken(
             accessToken = token.accessToken,
@@ -227,6 +243,18 @@ class GoogleOAuthTokenGateway(
     }
 }
 
+private fun <T> invalidRefreshToken(): Either<UserError, T> =
+    UserError.AuthenticationError.InvalidRefreshToken.left()
+
+private fun <T> refreshRequestError(exception: Throwable): Either<UserError, T> =
+    when (exception) {
+        is SocketTimeoutException,
+        is ConnectTimeoutException,
+        is HttpRequestTimeoutException,
+        -> UserError.ExternalError.GoogleCalendarTimeoutError.left()
+        else -> UserError.ExternalError.GoogleOAuthError.left()
+    }
+
 private data class CachedJwks(
     val keys: Map<String, RSAPublicKey>,
     val expiresAt: Instant,
@@ -254,6 +282,11 @@ private data class RefreshTokenResponse(
 )
 
 @Serializable
+private data class TokenErrorResponse(
+    val error: String,
+)
+
+@Serializable
 private data class JwksResponse(
     val keys: List<JwkKey>,
 )
@@ -264,3 +297,5 @@ private data class JwkKey(
     val n: String,
     val e: String,
 )
+
+private const val INVALID_GRANT = "invalid_grant"
