@@ -1,8 +1,11 @@
 package com.crowdodge.app.di
 
+import com.crowdodge.app.calendar.CalendarInitialSyncRequestedHandler
 import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
+import com.crowdodge.app.calendar.ReplaceGoogleCalendarSelectionCoordinator
 import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleService
 import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
+import com.crowdodge.shared.kernel.DomainEventHandler
 import com.crowdodge.shared.kernel.DomainEventPublisher
 import com.crowdodge.shared.kernel.TransactionRunner
 import com.crowdodge.user.application.query.ProxyGoogleCalendarUseCase
@@ -30,10 +33,14 @@ class AppModuleTest : FunSpec({
             val koin = koinApplication.koin
             koin.get<DomainEventPublisher>()
                 .shouldBeInstanceOf<TransactionalInProcessDomainEventPublisher>()
+            koin.getAll<DomainEventHandler>().single()
+                .shouldBeInstanceOf<CalendarInitialSyncRequestedHandler>()
             koin.get<UserCalendarSelectionService>()
                 .shouldBeInstanceOf<UserCalendarSelectionService>()
             koin.get<GoogleCalendarSyncLifecycleService>()
                 .shouldBeInstanceOf<GoogleCalendarSyncLifecycleService>()
+            koin.get<ReplaceGoogleCalendarSelectionCoordinator>()
+                .shouldBeInstanceOf<ReplaceGoogleCalendarSelectionCoordinator>()
             koin.get<MaintainGoogleCalendarSyncCoordinator>()
                 .shouldBeInstanceOf<MaintainGoogleCalendarSyncCoordinator>()
             koin.get<ProxyGoogleCalendarUseCase>()

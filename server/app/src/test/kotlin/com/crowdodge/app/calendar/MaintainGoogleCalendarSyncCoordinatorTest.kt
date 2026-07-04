@@ -230,6 +230,7 @@ private fun maintenanceFixture(
         accessTokens = tokenProvider,
         calendars = repository,
         transactions = transactions,
+        publisher = DomainEventPublisher { },
     )
     val states = MaintenanceCalendarSyncStatePort(operations)
     val watches = MaintenanceWatchGateway(operations)

@@ -1,5 +1,6 @@
 package com.crowdodge.app
 
+import com.crowdodge.app.calendar.configureGoogleCalendarSelectionRouting
 import com.crowdodge.app.plugins.configureAuthentication
 import com.crowdodge.app.plugins.configureKoin
 import com.crowdodge.app.plugins.configureMonitoring
@@ -28,5 +29,6 @@ fun Application.module() {
     configureRouting()
     configureEventRouting()
     configureUserRouting()
+    configureGoogleCalendarSelectionRouting()
     configureGoogleCalendarProxyRouting()
 }

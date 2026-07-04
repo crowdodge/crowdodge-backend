@@ -55,7 +55,7 @@ fun userModule(googleCalendarApiBaseUrl: String) = module {
     single<AppTokenPort> { get<JwtAppTokenAdapter>() }
     single { AuthenticateWithGoogleUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { ResolveGoogleCalendarConnectionUseCase(get(), get(), get()) }
-    single { UserCalendarSelectionService(get(), get(), get(), get()) }
+    single { UserCalendarSelectionService(get(), get(), get(), get(), get()) }
     single { ProxyGoogleCalendarUseCase(get(), get(), get(), get(), get()) }
     single { RefreshSessionUseCase(get(), get(), get()) }
     single { LogoutUseCase(get(), get(), get()) }

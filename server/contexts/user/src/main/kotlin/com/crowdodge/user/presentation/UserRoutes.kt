@@ -203,6 +203,13 @@ private fun UserError.toProblem(): Problem = when (this) {
         detail = "必要な Google scope が不足しています",
     )
 
+    is UserError.AuthorizationError.InsufficientCalendarAccess -> Problem(
+        status = 403,
+        type = code,
+        title = "Forbidden",
+        detail = "Google カレンダーの編集権限がありません",
+    )
+
     is UserError.ExternalError.GoogleOAuthError -> Problem(
         status = 502,
         type = code,
