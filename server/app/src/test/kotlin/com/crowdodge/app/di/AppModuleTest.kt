@@ -1,31 +1,50 @@
 package com.crowdodge.app.di
 
+import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
+import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleService
 import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
-import com.crowdodge.shared.kernel.DomainEventHandler
 import com.crowdodge.shared.kernel.DomainEventPublisher
+import com.crowdodge.shared.kernel.TransactionRunner
+import com.crowdodge.user.application.service.UserCalendarSelectionService
 import io.kotest.core.spec.style.FunSpec
-import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.engine.applicationEnvironment
 import org.koin.dsl.koinApplication
+import org.koin.dsl.module
 
 class AppModuleTest : FunSpec({
-    test("DomainEventPublisherを解決できる") {
+    test("Google Calendar watch renewalのDI構成を解決できる") {
         val koinApplication = koinApplication {
-            modules(appModule(appEnvironment()))
+            allowOverride(true)
+            modules(
+                appModule(appEnvironment()),
+                module {
+                    single<TransactionRunner> { ImmediateTransactionRunner }
+                },
+            )
         }
 
         try {
             val koin = koinApplication.koin
             koin.get<DomainEventPublisher>()
                 .shouldBeInstanceOf<TransactionalInProcessDomainEventPublisher>()
-            koin.getAll<DomainEventHandler>().shouldBeEmpty()
+            koin.get<UserCalendarSelectionService>()
+                .shouldBeInstanceOf<UserCalendarSelectionService>()
+            koin.get<GoogleCalendarSyncLifecycleService>()
+                .shouldBeInstanceOf<GoogleCalendarSyncLifecycleService>()
+            koin.get<MaintainGoogleCalendarSyncCoordinator>()
+                .shouldBeInstanceOf<MaintainGoogleCalendarSyncCoordinator>()
         } finally {
             koinApplication.close()
         }
     }
 })
+
+private object ImmediateTransactionRunner : TransactionRunner {
+    override suspend fun <T> inTransaction(block: suspend () -> T): T = block()
+    override suspend fun <T> readOnly(block: suspend () -> T): T = block()
+}
 
 private fun appEnvironment() = applicationEnvironment {
     config = MapApplicationConfig(
@@ -37,6 +56,8 @@ private fun appEnvironment() = applicationEnvironment {
         "crowdodge.database.sslMode" to "disable",
         "crowdodge.database.pgbouncer" to "false",
         "crowdodge.googleCalendar.apiBaseUrl" to "https://www.googleapis.com",
+        "crowdodge.googleCalendar.webhookUrl" to "https://example.test/webhooks/google-calendar",
+        "crowdodge.googleCalendar.channelToken" to "channel-token",
         "crowdodge.googleCalendar.fullSyncWindowDays" to "90",
         "crowdodge.googleCalendar.oauthTokenUrl" to "https://oauth2.googleapis.com/token",
         "crowdodge.googleCalendar.oauthJwksUrl" to "https://www.googleapis.com/oauth2/v3/certs",

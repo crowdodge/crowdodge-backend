@@ -6,6 +6,8 @@ import arrow.core.right
 import com.crowdodge.event.application.port.CalendarConnection
 import com.crowdodge.event.application.port.CalendarSyncBatch
 import com.crowdodge.event.application.port.CalendarSyncFetchResult
+import com.crowdodge.event.application.port.CalendarWatchRegistration
+import com.crowdodge.event.application.port.CalendarWatchRegistrationGateway
 import com.crowdodge.event.application.port.GoogleCalendarEventsGateway
 import com.crowdodge.event.application.port.IncomingCalendarEvent
 import com.crowdodge.event.domain.error.EventError
@@ -22,24 +24,30 @@ import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlin.uuid.Uuid
 
 @Suppress("TooManyFunctions")
 class GoogleCalendarGateway(
     private val config: GoogleCalendarConfig,
     private val httpClient: HttpClient,
-) : GoogleCalendarEventsGateway {
+) : GoogleCalendarEventsGateway, CalendarWatchRegistrationGateway {
     private val json = Json {
         ignoreUnknownKeys = true
         explicitNulls = false
@@ -65,6 +73,58 @@ class GoogleCalendarGateway(
                 }
             },
         )
+
+    @Suppress("NestedBlockDepth", "ReturnCount")
+    override suspend fun startWatch(
+        connection: CalendarConnection,
+    ): Either<EventError.ExternalError, CalendarWatchRegistration> {
+        val calendarId = connection.calendarId
+        val accessToken = connection.accessToken
+        val channelId = Uuid.random().toString()
+        val request = WatchRequest(
+            id = channelId,
+            type = WATCH_TYPE,
+            address = config.webhookUrl,
+            token = config.channelToken,
+        )
+        val response = send {
+            httpClient.post(apiUrl("/calendar/v3/calendars/${calendarId.pathSegment()}/events/watch")) {
+                bearerAuth(accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(json.encodeToString(request))
+            }
+        }.fold({ return it.left() }, { it })
+
+        if (!response.status.isSuccess()) return googleError()
+        val watch = runCatchingPreservingCancellation {
+            json.decodeFromString<WatchResponse>(response.bodyAsText())
+        }.getOrNull()
+            ?: return googleError()
+        return CalendarWatchRegistration(
+            channelId = watch.id,
+            resourceId = watch.resourceId,
+            channelToken = config.channelToken,
+            expiration = watch.expiration?.toLongOrNull()?.let(Instant::fromEpochMilliseconds),
+        ).right()
+    }
+
+    @Suppress("NestedBlockDepth", "ReturnCount")
+    override suspend fun stopWatch(
+        connection: CalendarConnection,
+        channelId: String,
+        resourceId: String,
+    ): Either<EventError.ExternalError, Unit> {
+        val accessToken = connection.accessToken
+        val requestBody = json.encodeToString(StopChannelRequest(channelId, resourceId))
+        val response = send {
+            httpClient.post(apiUrl("/calendar/v3/channels/stop")) {
+                bearerAuth(accessToken)
+                contentType(ContentType.Application.Json)
+                setBody(requestBody)
+            }
+        }.fold({ return it.left() }, { it })
+        return if (response.status.isSuccess()) Unit.right() else googleError()
+    }
 
     @Suppress("NestedBlockDepth", "ReturnCount")
     private suspend fun fetchEvents(
@@ -224,6 +284,7 @@ class GoogleCalendarGateway(
         URLEncoder.encode(this, StandardCharsets.UTF_8).replace("+", "%20")
 
     private companion object {
+        private const val WATCH_TYPE = "web_hook"
         private const val STATUS_CANCELLED = "cancelled"
         private const val MAX_RESULTS = 2500
     }
@@ -242,7 +303,30 @@ private sealed interface EventsListRequest {
 
 data class GoogleCalendarConfig(
     val apiBaseUrl: String,
+    val webhookUrl: String,
+    val channelToken: String?,
     val fullSyncWindowDays: Int,
+)
+
+@Serializable
+private data class WatchRequest(
+    val id: String,
+    val type: String,
+    val address: String,
+    val token: String?,
+)
+
+@Serializable
+private data class WatchResponse(
+    val id: String,
+    val resourceId: String,
+    val expiration: String? = null,
+)
+
+@Serializable
+private data class StopChannelRequest(
+    val id: String,
+    val resourceId: String,
 )
 
 @Serializable

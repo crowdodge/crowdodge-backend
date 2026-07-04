@@ -7,9 +7,12 @@ import com.crowdodge.event.domain.error.EventError
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldContain
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.network.sockets.ConnectTimeoutException
+import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -19,6 +22,60 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 class GoogleCalendarGatewayTest : FunSpec({
+    test("startWatchは明示されたconnectionのcalendarIdとaccessTokenでHTTP登録する") {
+        var requestedUrl = ""
+        var authorization: String? = null
+        var requestBody = ""
+        val httpClient = HttpClient(
+            MockEngine { request ->
+                requestedUrl = request.url.toString()
+                authorization = request.headers[HttpHeaders.Authorization]
+                requestBody = request.body.toByteArray().decodeToString()
+                respond(
+                    content = """{"id":"registered-channel","resourceId":"resource-1","expiration":"1783036800000"}""",
+                    status = HttpStatusCode.OK,
+                    headers = headersOf(HttpHeaders.ContentType, "application/json"),
+                )
+            },
+        )
+
+        val result = gateway(httpClient)
+            .startWatch(CalendarConnection(calendarId = "team/calendar", accessToken = "explicit-token"))
+            .fold({ error("unexpected error: $it") }, { it })
+
+        requestedUrl shouldContain "/calendars/team%2Fcalendar/events/watch"
+        authorization shouldBe "Bearer explicit-token"
+        requestBody shouldContain """"address":"https://webhook.example.test/webhooks/google-calendar""""
+        result.channelId shouldBe "registered-channel"
+        result.resourceId shouldBe "resource-1"
+    }
+
+    test("stopWatchは明示されたconnectionのaccessTokenと指定channelでHTTP停止する") {
+        var requestedUrl = ""
+        var authorization: String? = null
+        var requestBody = ""
+        val httpClient = HttpClient(
+            MockEngine { request ->
+                requestedUrl = request.url.toString()
+                authorization = request.headers[HttpHeaders.Authorization]
+                requestBody = request.body.toByteArray().decodeToString()
+                respond(content = "", status = HttpStatusCode.NoContent)
+            },
+        )
+
+        gateway(httpClient)
+            .stopWatch(
+                connection = CalendarConnection(calendarId = "unused-calendar", accessToken = "stop-token"),
+                channelId = "channel-to-stop",
+                resourceId = "resource-to-stop",
+            )
+            .fold({ error("unexpected error: $it") }, { it })
+
+        requestedUrl shouldContain "/calendar/v3/channels/stop"
+        authorization shouldBe "Bearer stop-token"
+        requestBody shouldBe """{"id":"channel-to-stop","resourceId":"resource-to-stop"}"""
+    }
+
     test("fullSync は nextPageToken がなくなるまで全ページを取得し全ページで同じ timeMin/timeMax を送る") {
         val requestedUrls = mutableListOf<String>()
         val httpClient = HttpClient(
@@ -131,6 +188,8 @@ class GoogleCalendarGatewayTest : FunSpec({
         val gateway = GoogleCalendarGateway(
             config = GoogleCalendarConfig(
                 apiBaseUrl = "https://calendar.example.test",
+                webhookUrl = "https://webhook.example.test/webhooks/google-calendar",
+                channelToken = null,
                 fullSyncWindowDays = 90,
             ),
             httpClient = httpClient,
@@ -153,6 +212,8 @@ class GoogleCalendarGatewayTest : FunSpec({
         val gateway = GoogleCalendarGateway(
             config = GoogleCalendarConfig(
                 apiBaseUrl = "https://calendar.example.test",
+                webhookUrl = "https://webhook.example.test/webhooks/google-calendar",
+                channelToken = null,
                 fullSyncWindowDays = 90,
             ),
             httpClient = httpClient,
@@ -165,6 +226,20 @@ class GoogleCalendarGatewayTest : FunSpec({
                 windowEnd = Instant.parse("2026-10-01T00:00:00Z"),
             )
         }
+    }
+
+    test("startWatchのCIO socket timeoutをGoogle Calendar timeoutへ変換する") {
+        val httpClient = HttpClient(MockEngine { throw SocketTimeoutException("socket timeout") })
+
+        gateway(httpClient).startWatch(FixedConnection).leftOrNull() shouldBe
+            EventError.ExternalError.GoogleCalendarTimeoutError
+    }
+
+    test("stopWatchのCIO connect timeoutをGoogle Calendar timeoutへ変換する") {
+        val httpClient = HttpClient(MockEngine { throw ConnectTimeoutException("connect timeout") })
+
+        gateway(httpClient).stopWatch(FixedConnection, "channel", "resource").leftOrNull() shouldBe
+            EventError.ExternalError.GoogleCalendarTimeoutError
     }
 
     test("fullSyncのHttpTimeoutをGoogle Calendar timeoutへ変換する") {
@@ -193,6 +268,8 @@ private fun gateway(httpClient: HttpClient): GoogleCalendarGateway =
     GoogleCalendarGateway(
         config = GoogleCalendarConfig(
             apiBaseUrl = "https://calendar.example.test",
+            webhookUrl = "https://webhook.example.test/webhooks/google-calendar",
+            channelToken = null,
             fullSyncWindowDays = 90,
         ),
         httpClient = httpClient,
@@ -231,3 +308,9 @@ private fun queryParam(url: String, name: String): String? =
             java.net.URLDecoder.decode(parts.getOrElse(1) { "" }, Charsets.UTF_8.name())
         }
         ?.firstOrNull()
+
+private fun io.ktor.http.content.OutgoingContent.toByteArray(): ByteArray =
+    when (this) {
+        is io.ktor.http.content.OutgoingContent.ByteArrayContent -> bytes()
+        else -> byteArrayOf()
+    }
