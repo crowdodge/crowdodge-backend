@@ -12,7 +12,8 @@
 - GoogleカレンダーのOAuth認証情報取得とaccess token更新は実装済み。
 - Google認証、セッション発行・更新・失効、`/auth/*` のpresentationは実装済み。
 - 定期整合用のGoogle Calendar List取得は実装済み。
-- Google Calendar APIプロキシ、利用者向けカレンダー一覧API、選択更新APIは未実装。
+- Google Calendar APIプロキシは実装済み。
+- 利用者向けカレンダー一覧API、選択更新APIは未実装。
 
 ### 責務
 

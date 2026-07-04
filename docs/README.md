@@ -32,6 +32,7 @@
 
 - [Google認証とアプリセッション](integrations/google-auth.md)
 - [Google カレンダー同期](integrations/google-calendar-sync.md)
+- [Calendar Events API プロキシ](integrations/google-calendar-proxy.md)
 - [外部サービス](integrations/external-services.md)
 
 ### 運用・非同期処理
