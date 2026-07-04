@@ -13,7 +13,7 @@
 - Google認証、セッション発行・更新・失効、`/auth/*` のpresentationは実装済み。
 - 定期整合用のGoogle Calendar List取得は実装済み。
 - Google Calendar APIプロキシは実装済み。
-- 利用者向けカレンダー一覧API、選択更新APIは未実装。
+- 利用者向けカレンダー一覧API、0件から3件の選択更新、追加時のwatch登録と初回同期、解除時の同期削除は実装済み。
 
 ### 責務
 

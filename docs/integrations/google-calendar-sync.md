@@ -9,7 +9,7 @@
 
 ## 実装状況
 
-- 実装済み: Google Calendar API クライアント、watch登録、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影、Webhook受信ルート、watch期限前更新ジョブ。
+- 実装済み: Google Calendar選択API、Google Calendar API クライアント、watch登録、初回同期、差分同期、`syncToken` 失効時のフル同期、ローリング窓内への予定投影、Webhook受信ルート、watch期限前更新ジョブ。
 - 未実装: 予定ドメインイベントの下流購読者。
 
 ## 基本方針
@@ -41,6 +41,25 @@ app 層の `UserCalendarConnectionAdapter` は event BC の `UserCalendarUuid` �
 user BC は保存済み scope を検証し、access token の失効まで1分以内なら refresh token を使って更新する。
 更新した access token と有効期限は `user_google_credentials` へ保存する。
 
+## カレンダー選択
+
+すべてのルートは `app-jwt` 認証を必須とする。
+
+- `GET /users/me/google-calendars` は Google Calendar List と `user_calendars` を突合し、カレンダーID、名前、色、primary、access role、選択状態を返す。
+- `PUT /users/me/google-calendars` は `calendarIds` で選択全体を一括置換し、成功時は `204 No Content` を返す。
+- 選択数は0件から3件までとし、重複を許可しない。
+- `accessRole` が `owner` または `writer` のカレンダーだけを選択できる。
+
+選択更新は次の順序で処理する。
+
+1. Google Calendar List と現在の選択から追加、維持、解除を計算する。
+2. 追加対象のwatchと同期状態を作成する。
+3. すべての追加準備に成功した場合だけ `user_calendars` を一括置換する。
+4. 追加対象ごとに `CalendarInitialSyncRequested` をcommit後配送し、初回同期する。
+5. 解除対象のwatch停止、保存予定削除、同期状態削除をベストエフォートで実行する。
+
+追加準備または選択確定に失敗した場合、作成済みwatchと同期状態を補償削除し、以前の選択を維持する。
+
 ## 同期状態
 
 - 同期状態は `event_calendar_syncs` に保持する。
@@ -63,6 +82,7 @@ user BC は保存済み scope を検証し、access token の失効まで1分以
 
 ## 初回同期
 
+選択追加時は `CalendarInitialSyncRequestedHandler` が初回同期を実行する。
 `syncToken` がない場合は `singleEvents=true`、`showDeleted=true`、`maxResults=2500`、
 `timeMin=同期処理開始時刻`、`timeMax=materialized_until` で `events.list` を呼ぶ。
 `nextPageToken` がある間は全ページを取得し、最終ページの `nextSyncToken` を保存する。

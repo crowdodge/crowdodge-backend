@@ -15,8 +15,7 @@
    - ヘルスチェック
 2. user
    - 状態: 一部実装済み
-   - 実装済み: ドメインモデル、リポジトリ、テーブル、マイグレーション、Google サインイン、認証 presentation API、同期用access token更新、定期整合用Calendar List取得、Google Calendar API プロキシ
-   - 未実装: 選択更新API
+   - 実装済み: ドメインモデル、リポジトリ、テーブル、マイグレーション、Google サインイン、認証 presentation API、同期用access token更新、Calendar List取得、Google Calendar選択更新API、Google Calendar API プロキシ
 3. event
    - 状態: 一部実装済み
    - 実装済み: 予定投影モデル、同期サービス、Google Calendar APIクライアント、webhook受信route、watch登録・期限前更新ジョブ、リポジトリ、テーブル、マイグレーション

@@ -1,6 +1,7 @@
 package com.crowdodge.user.domain.repository
 
 import arrow.core.Either
+import arrow.core.right
 import com.crowdodge.shared.kernel.UserUuid
 import com.crowdodge.user.domain.error.UserError
 import com.crowdodge.user.domain.model.UserCalendar
@@ -21,4 +22,17 @@ interface UserCalendarRepository {
 
     /** 全ユーザーの選択中カレンダー一覧（Google Calendar watch 定期整合用）。 */
     suspend fun findAll(): List<UserCalendar> = error("findAll is not implemented")
+
+    /** 当該ユーザーの選択全体を置換する。呼び出し側が transaction を開始する。 */
+    suspend fun replaceForUser(
+        userUuid: UserUuid,
+        calendars: List<UserCalendar>,
+    ): Either<UserError.ConflictError.DuplicateCalendar, Unit> {
+        findByUserUuid(userUuid).forEach { delete(userUuid, it.userCalendarUuid) }
+        calendars.forEach {
+            val result = create(it)
+            if (result.isLeft()) return result
+        }
+        return Unit.right()
+    }
 }

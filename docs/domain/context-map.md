@@ -20,7 +20,8 @@
 ```text
 user
   ├─ UserRegistered
-  └─ CalendarSelectionChanged
+  ├─ CalendarSelectionChanged
+  └─ CalendarInitialSyncRequested
 
 event
   ├─ EventScheduled
@@ -28,6 +29,9 @@ event
   ├─ EventRemindTimingChanged
   └─ EventCancelled
 ```
+
+`CalendarInitialSyncRequested` はカレンダー選択確定時に追加対象ごとに発行する。
+app 層の handler が user BC の `UserCalendarUuid` を event BC の同名値へ変換し、初回同期を実行する。
 
 ## 未実装の想定連鎖
 
@@ -43,7 +47,8 @@ event
 
 | 参照元 | 参照先 | 用途 |
 |---|---|---|
-| event | user | カレンダー所有者の判定 |
+| app | user / event | カレンダー選択更新、watch登録、初回同期、解除処理の協調 |
+| event | user | カレンダーIDと有効なaccess tokenの取得 |
 | destination | event | 予定内容と場所情報の参照 |
 | congestion | destination | 目的地とルート情報の参照 |
 | notification | user | FCMトークンの取得 |

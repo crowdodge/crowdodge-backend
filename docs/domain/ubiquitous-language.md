@@ -43,6 +43,7 @@
 |---|---|---|
 | `UserRegistered` | user | ユーザー登録後の後続処理 |
 | `CalendarSelectionChanged` | user | 同期対象カレンダーの変更通知 |
+| `CalendarInitialSyncRequested` | user | 選択追加後の初回同期要求 |
 | `EventScheduled` | event | 予定追加後の目的地推定 |
 | `EventRescheduled` | event | 予定変更後の目的地・混雑再評価 |
 | `EventCancelled` | event | 予定削除後の通知キャンセル |

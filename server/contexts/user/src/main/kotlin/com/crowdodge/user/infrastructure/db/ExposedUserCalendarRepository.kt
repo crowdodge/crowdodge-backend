@@ -5,6 +5,7 @@ import arrow.core.getOrElse
 import arrow.core.raise.Raise
 import arrow.core.raise.catch
 import arrow.core.raise.either
+import arrow.core.right
 import com.crowdodge.shared.infra.db.PostgresSqlState
 import com.crowdodge.shared.kernel.PersistedDataCorruption
 import com.crowdodge.shared.kernel.UserUuid
@@ -14,6 +15,7 @@ import com.crowdodge.user.domain.model.UserCalendar
 import com.crowdodge.user.domain.model.UserCalendarUuid
 import com.crowdodge.user.domain.repository.UserCalendarRepository
 import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
+import io.r2dbc.spi.R2dbcDataIntegrityViolationException
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -60,6 +62,18 @@ class ExposedUserCalendarRepository : UserCalendarRepository {
             .map { toDomain(it) }
             .toList()
 
+    override suspend fun replaceForUser(
+        userUuid: UserUuid,
+        calendars: List<UserCalendar>,
+    ): Either<UserError.ConflictError.DuplicateCalendar, Unit> {
+        UserCalendarsTable.deleteWhere { UserCalendarsTable.userUuid eq userUuid.value }
+        calendars.forEach {
+            val result = create(it)
+            if (result.isLeft()) return result
+        }
+        return Unit.right()
+    }
+
     /**
      * 一意制約違反（SQLSTATE 23505 = UNIQUE(user_uuid, google_calendar_id)）だけを
      * [UserError.ConflictError.DuplicateCalendar] に変換する。FK 等の他の整合性違反や接続断は例外のまま透過（5xx）。
@@ -67,7 +81,8 @@ class ExposedUserCalendarRepository : UserCalendarRepository {
     private suspend fun Raise<UserError.ConflictError.DuplicateCalendar>.onDuplicateCalendar(
         block: suspend () -> Unit,
     ) = catch({ block() }) { e: ExposedR2dbcException ->
-        if (e.sqlState == PostgresSqlState.UNIQUE_VIOLATION) {
+        val integrityError = e.cause as? R2dbcDataIntegrityViolationException
+        if (integrityError?.sqlState == PostgresSqlState.UNIQUE_VIOLATION) {
             raise(UserError.ConflictError.DuplicateCalendar)
         } else {
             throw e

@@ -87,6 +87,16 @@ sealed interface UserError : DomainError {
             override val name: String = "token_hash"
             override val code: String = "invalid-auth-refresh-token-hash"
         }
+
+        data object TooManyCalendarSelections : ValidationError {
+            override val name: String = "calendar_ids"
+            override val code: String = "too-many-calendar-selections"
+        }
+
+        data object DuplicateCalendarSelectionInput : ValidationError {
+            override val name: String = "calendar_ids"
+            override val code: String = "duplicate-calendar-selection-input"
+        }
     }
     sealed interface ConflictError : UserError {
         data object DuplicateEmail : ConflictError {
@@ -110,6 +120,12 @@ sealed interface UserError : DomainError {
 
         data object InvalidRefreshToken : AuthenticationError {
             override val code: String = "invalid-refresh-token"
+        }
+    }
+
+    sealed interface AuthorizationError : UserError {
+        data object InsufficientCalendarAccess : AuthorizationError {
+            override val code: String = "insufficient-calendar-access"
         }
     }
 

@@ -11,6 +11,7 @@
 - 必須scopeは `https://www.googleapis.com/auth/calendar.events` と `https://www.googleapis.com/auth/calendar.calendarlist.readonly` とする。
 - Google ID tokenはGoogle JWKSで検証する。
 - Google access tokenとrefresh tokenはAES-256-GCMで暗号化して保存する。
+- Google Calendar List は選択候補の表示と `owner` / `writer` 権限の検証に使う。
 - Calendar Events API プロキシは内容を解釈・保存せず、Googleのレスポンスを転送する。
 - 同期処理は既定90日窓の予定を `events` に保存する。
 - Google認証とアプリセッションの詳細仕様は [Google認証とアプリセッション](google-auth.md) に従う。

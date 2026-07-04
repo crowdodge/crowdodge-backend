@@ -1,6 +1,8 @@
 package com.crowdodge.app.di
 
+import com.crowdodge.app.calendar.CalendarInitialSyncRequestedHandler
 import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
+import com.crowdodge.app.calendar.ReplaceGoogleCalendarSelectionCoordinator
 import com.crowdodge.app.calendar.UserCalendarConnectionAdapter
 import com.crowdodge.app.calendar.googleCalendarConfig
 import com.crowdodge.app.calendar.googleOAuthConfig
@@ -61,6 +63,7 @@ fun appModule(environment: ApplicationEnvironment): Module {
         // readiness（/ready）用 DB 到達性プローブ。R2DBC は遅延接続のためここで初接続する。
         single<ReadinessProbe> { DatabaseReadinessProbe(get()) }
         single<CoroutineScope> { CoroutineScope(SupervisorJob() + Dispatchers.Default) } onClose { it?.cancel() }
+        single<DomainEventHandler> { CalendarInitialSyncRequestedHandler(get()) }
         single<DomainEventPublisher> {
             TransactionalInProcessDomainEventPublisher(
                 handlerProvider = { getAll<DomainEventHandler>() },
@@ -78,6 +81,7 @@ fun appModule(environment: ApplicationEnvironment): Module {
         single<JwtAppTokenConfig> { jwtAppTokenConfig }
         single<TokenCipher> { tokenCipher }
         single<CalendarConnectionProvider> { UserCalendarConnectionAdapter(get()) }
+        single { ReplaceGoogleCalendarSelectionCoordinator(get(), get()) }
         single { MaintainGoogleCalendarSyncCoordinator(get(), get()) }
     }
 }
