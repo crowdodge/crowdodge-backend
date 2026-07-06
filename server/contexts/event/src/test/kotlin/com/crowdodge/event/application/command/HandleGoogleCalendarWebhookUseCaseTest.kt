@@ -26,6 +26,7 @@ import io.kotest.assertions.arrow.core.shouldBeRight
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.shouldBe
 import kotlin.time.Instant
 import kotlin.uuid.Uuid
 
@@ -51,6 +52,20 @@ class HandleGoogleCalendarWebhookUseCaseTest : FunSpec({
 
         states.findByChannelIds shouldContainExactly listOf("channel-1")
         gateway.incrementalCalls shouldContainExactly listOf("sync-token")
+    }
+
+    test("existsは同期状態をreadOnlyトランザクションで検索する") {
+        val transactions = RecordingWebhookTransactionRunner()
+        val calendarUuid = UserCalendarUuid(Uuid.random())
+        val states = RecordingStatePort(
+            state = state(calendarUuid, channelToken = "token"),
+            requireReadOnly = { transactions.inReadOnly },
+        )
+        val gateway = RecordingEventsGateway()
+
+        useCase(states, gateway, transactions).execute("channel-1", "token", "exists").shouldBeRight()
+
+        transactions.readOnlyCalls shouldBe 1
     }
 
     test("未登録channelは同期せず成功する") {
@@ -110,6 +125,7 @@ class HandleGoogleCalendarWebhookUseCaseTest : FunSpec({
 private fun useCase(
     states: RecordingStatePort,
     gateway: RecordingEventsGateway,
+    transactions: TransactionRunner = ImmediateTransactionRunner,
 ): HandleGoogleCalendarWebhookUseCase =
     HandleGoogleCalendarWebhookUseCase(
         states = states,
@@ -131,6 +147,7 @@ private fun useCase(
                 override fun now(): Instant = Instant.parse("2026-07-01T00:00:00Z")
             },
         ),
+        transactions = transactions,
     )
 
 private class RecordingEventsGateway(
@@ -157,12 +174,14 @@ private class RecordingEventsGateway(
 
 private class RecordingStatePort(
     private val state: CalendarSyncState? = null,
+    private val requireReadOnly: (() -> Boolean)? = null,
 ) : CalendarSyncStatePort {
     val findByChannelIds = mutableListOf<String>()
 
     override suspend fun find(userCalendarUuid: UserCalendarUuid): CalendarSyncState? = state
 
     override suspend fun findByChannelId(channelId: String): CalendarSyncState? {
+        check(requireReadOnly?.invoke() ?: true) { "read-only transaction required" }
         findByChannelIds += channelId
         return state
     }
@@ -194,6 +213,26 @@ private object ImmediateTransactionRunner : TransactionRunner {
     override suspend fun <T> inTransaction(block: suspend () -> T): T = block()
 
     override suspend fun <T> readOnly(block: suspend () -> T): T = block()
+}
+
+private class RecordingWebhookTransactionRunner : TransactionRunner {
+    var inReadOnly = false
+        private set
+    var readOnlyCalls = 0
+        private set
+
+    override suspend fun <T> inTransaction(block: suspend () -> T): T = block()
+
+    override suspend fun <T> readOnly(block: suspend () -> T): T {
+        readOnlyCalls += 1
+        check(!inReadOnly) { "nested read-only transaction" }
+        inReadOnly = true
+        return try {
+            block()
+        } finally {
+            inReadOnly = false
+        }
+    }
 }
 
 private object EmptyEventRepository : EventRepository {

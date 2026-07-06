@@ -42,5 +42,5 @@ fun eventModule() = module {
             materializationWindowDays = get<GoogleCalendarConfig>().fullSyncWindowDays,
         )
     }
-    single<HandleGoogleCalendarWebhookUseCase> { HandleGoogleCalendarWebhookUseCase(get(), get()) }
+    single<HandleGoogleCalendarWebhookUseCase> { HandleGoogleCalendarWebhookUseCase(get(), get(), get()) }
 }
