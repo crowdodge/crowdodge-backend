@@ -12,9 +12,13 @@
 
 ## Google OAuth 認証フロー
 
-- クライアントは PKCE で取得した認可コード、redirect URI、code verifier を `POST /auth/google` へ送る。
-- サーバは認可コードを Google token endpoint で交換し、access token、refresh token、ID token を取得する。
+- `POST /auth/google` の主フローは **serverAuthCode フロー**とする。**PKCE フローはデバッグ・運用検証用**の補助フローとして受け付ける。
+  - **serverAuthCode フロー**（主・Android / iOS）: クライアントは Google Sign-In SDK で取得した serverAuthCode を `authorizationCode` として送る。`redirectUri` と `codeVerifier` は省略する。
+  - **PKCE フロー**（デバッグ用）: curl などから、ブラウザ + PKCE で取得した認可コード、redirect URI、code verifier を送る。SDK を介さずに本番エンドポイントを検証する手段として維持する。
+- リクエストフィールドは `authorizationCode` が必須、`redirectUri` / `codeVerifier` は任意とする。任意フィールドは存在する場合のみ非空・2048 文字以下を検証する。
+- サーバは認可コードを Google token endpoint で交換し、access token、refresh token、ID token を取得する。`redirect_uri` / `code_verifier` はリクエストに含まれた場合のみ転送する。
 - 必須 scope は `https://www.googleapis.com/auth/calendar.events` と `https://www.googleapis.com/auth/calendar.calendarlist.readonly` とする。付与 scope に含まれない場合はエラーとする。
+- モバイルクライアントの GCP / SDK 設定手順は [../operations/mobile-oauth-setup.md](../operations/mobile-oauth-setup.md) を参照。
 
 ## ID token 検証
 
@@ -39,7 +43,7 @@
 
 `POST /auth/google` は次の順序で処理する。
 
-1. 認可コードを交換し、ID token を検証する。
+1. 認可コードを交換し、ID token を検証する。フローは PKCE / serverAuthCode のどちらでも以降の処理は同一とする。
 2. Google subject で既存ユーザーを特定する。未登録の場合は新規登録する。新規登録時に `user_calendars` へカレンダーは登録しない。
 3. `user_google_credentials` を upsert する。再認証時は付与 scope を更新する。
 4. アプリ refresh token を発行し、hash を `user_auth_refresh_tokens` へ保存する。

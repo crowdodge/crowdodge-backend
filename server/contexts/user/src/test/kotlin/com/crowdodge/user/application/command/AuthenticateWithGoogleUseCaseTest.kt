@@ -99,6 +99,52 @@ class AuthenticateWithGoogleUseCaseTest : FunSpec({
         tokenPort.accessTokenIssuedAfterCommit shouldBe true
     }
 
+    test("serverAuthCodeフロー（redirectUri/codeVerifierがnull）でも認証に成功する") {
+        val transactionRunner = RecordingTransactionRunner()
+        val users = FakeUserRepository()
+        val calendars = FakeUserCalendarRepository(transactionRunner)
+        val credentials = FakeUserGoogleCredentialRepository(transactionRunner)
+        val refreshTokens = FakeUserAuthRefreshTokenRepository(transactionRunner)
+        val tokenPort = FakeAppTokenPort(refreshExpiry)
+        val oauthGateway = FakeGoogleOAuthGateway(
+            authorization = authorization(
+                googleSubject = "google-subject-1",
+                email = "mobile-user@example.com",
+                accessToken = "google-access-1",
+                refreshToken = "google-refresh-1",
+                expiresAt = Instant.parse("2026-06-27T01:00:00Z"),
+                grantedScopes = "openid email profile https://www.googleapis.com/auth/calendar",
+            ),
+        )
+        val useCase = AuthenticateWithGoogleUseCase(
+            googleOAuthGateway = oauthGateway,
+            userRepository = users,
+            userCalendarRepository = calendars,
+            userGoogleCredentialRepository = credentials,
+            userAuthRefreshTokenRepository = refreshTokens,
+            appTokenPort = tokenPort,
+            transactionRunner = transactionRunner,
+        )
+
+        val result = useCase.handle(
+            AuthenticateWithGoogleCommand(
+                authorizationCode = "server-auth-code",
+                redirectUri = null,
+                codeVerifier = null,
+            ),
+        )
+
+        result shouldBe
+            AuthenticateWithGoogleResult(
+                accessToken = "app-access-token",
+                refreshToken = "app-refresh-token",
+                refreshTokenExpiresAt = refreshExpiry,
+            ).right()
+        users.createdUsers shouldHaveSize 1
+        credentials.upsertedCredentials shouldHaveSize 1
+        refreshTokens.createdTokens shouldHaveSize 1
+    }
+
     test("再ログインは既存利用者を再利用し refresh token が省略された場合は既存値を維持する") {
         val transactionRunner = RecordingTransactionRunner()
         val existingUser = User.register(gid("google-subject-1"), mail("existing@example.com"))
@@ -253,8 +299,8 @@ private class FakeGoogleOAuthGateway(
 
     override suspend fun exchange(
         authorizationCode: String,
-        redirectUri: String,
-        codeVerifier: String,
+        redirectUri: String?,
+        codeVerifier: String?,
     ): Either<UserError, GoogleAuthorization> {
         wasCalledInsideTransaction = RecordingTransactionRunner.currentlyInTransaction
         return error?.left() ?: authorization!!.right()

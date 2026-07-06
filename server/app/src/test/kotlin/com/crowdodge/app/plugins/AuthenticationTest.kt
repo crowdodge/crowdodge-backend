@@ -108,6 +108,63 @@ class AuthenticationTest : FunSpec({
         }
     }
 
+    test("POST /auth/google は redirectUri と codeVerifier を省略した serverAuthCode フローでも 200 を返す") {
+        testApplication {
+            application {
+                configureAuthenticationTestApp(
+                    now = now,
+                    jwtConfig = jwtConfig,
+                    googleOAuthGateway = FakeGoogleOAuthGateway(),
+                )
+            }
+
+            val response = client.post("/auth/google") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    """
+                    {
+                      "authorizationCode": "ok-code"
+                    }
+                    """.trimIndent(),
+                )
+            }
+
+            response.status shouldBe HttpStatusCode.OK
+            val body = json.decodeFromString(TokenResponseBody.serializer(), response.bodyAsText())
+            body.accessToken shouldNotBe ""
+            body.refreshToken shouldNotBe ""
+        }
+    }
+
+    test("POST /auth/google は空文字の redirectUri を 400 Problem で拒否する") {
+        testApplication {
+            application {
+                configureAuthenticationTestApp(
+                    now = now,
+                    jwtConfig = jwtConfig,
+                    googleOAuthGateway = FakeGoogleOAuthGateway(),
+                )
+            }
+
+            val response = client.post("/auth/google") {
+                contentType(ContentType.Application.Json)
+                setBody(
+                    """
+                    {
+                      "authorizationCode": "ok-code",
+                      "redirectUri": " ",
+                      "codeVerifier": "pkce-verifier"
+                    }
+                    """.trimIndent(),
+                )
+            }
+
+            response.status shouldBe HttpStatusCode.BadRequest
+            response.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
+            response.bodyAsText() shouldContain "\"field\":\"redirectUri\""
+        }
+    }
+
     test("POST /auth/google は不正 code を 401 Problem へ変換する") {
         testApplication {
             application {
@@ -537,8 +594,8 @@ private class FixedClock(private val now: Instant) : Clock {
 private class FakeGoogleOAuthGateway : GoogleOAuthGateway {
     override suspend fun exchange(
         authorizationCode: String,
-        redirectUri: String,
-        codeVerifier: String,
+        redirectUri: String?,
+        codeVerifier: String?,
     ): Either<UserError, GoogleAuthorization> = when (authorizationCode) {
         "bad-code" -> UserError.AuthenticationError.InvalidGoogleToken.left()
         "missing-scope" -> UserError.AuthenticationError.MissingGoogleScope.left()
