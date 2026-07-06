@@ -15,6 +15,26 @@ import kotlinx.coroutines.CancellationException
  */
 fun Application.configureStatusPages() {
     install(StatusPages) {
+        status(HttpStatusCode.NotFound) { call, _ ->
+            call.respondProblem(
+                Problem(
+                    status = HttpStatusCode.NotFound.value,
+                    code = "NOT_FOUND",
+                    title = "Not Found",
+                    detail = "リソースが見つかりません",
+                ),
+            )
+        }
+        status(HttpStatusCode.MethodNotAllowed) { call, _ ->
+            call.respondProblem(
+                Problem(
+                    status = HttpStatusCode.MethodNotAllowed.value,
+                    code = "METHOD_NOT_ALLOWED",
+                    title = "Method Not Allowed",
+                    detail = "HTTPメソッドが許可されていません",
+                ),
+            )
+        }
         exception<Throwable> { call, cause ->
             // クライアント切断などのコルーチンキャンセルは握りつぶさず再送出する
             // （500 として誤計上せず、キャンセル伝播を妨げないため）。

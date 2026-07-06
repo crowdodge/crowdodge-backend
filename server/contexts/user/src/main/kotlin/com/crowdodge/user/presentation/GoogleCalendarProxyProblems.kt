@@ -23,7 +23,7 @@ internal fun proxyProblemFor(status: Int): Problem? =
             title = "Gateway Timeout",
             detail = "Google Calendar request timed out",
         )
-        in SANITIZED_GOOGLE_ERROR_STATUSES -> Problem(
+        in HTTP_ERROR_STATUS_RANGE -> Problem(
             status = status,
             code = "GOOGLE_CALENDAR_ERROR",
             title = HttpStatusCode.fromValue(status).description,
@@ -32,10 +32,7 @@ internal fun proxyProblemFor(status: Int): Problem? =
         else -> null
     }
 
-private val SANITIZED_GOOGLE_ERROR_STATUSES = setOf(
-    HttpStatusCode.Forbidden.value,
-    HttpStatusCode.NotFound.value,
-    HttpStatusCode.Conflict.value,
-    HttpStatusCode.Gone.value,
-    HttpStatusCode.TooManyRequests.value,
-)
+private val HTTP_ERROR_STATUS_RANGE = MIN_HTTP_ERROR_STATUS..MAX_HTTP_ERROR_STATUS
+
+private const val MIN_HTTP_ERROR_STATUS = 400
+private const val MAX_HTTP_ERROR_STATUS = 599

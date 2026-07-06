@@ -41,6 +41,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.testing.testApplication
@@ -132,8 +133,8 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         fake.requests shouldBe emptyList()
     }
 
-    test("Google errorはstatusを維持し機密bodyをProblemへ変換する") {
-        listOf(403, 404, 409, 410, 429).forEach { status ->
+    test("Googleの全4xxと5xxはstatusを維持し機密bodyをProblemへ変換する") {
+        listOf(400, 401, 403, 404, 409, 410, 412, 429, 500, 502, 503, 504).forEach { status ->
             val fake = RecordingGateway(
                 CalendarProxyResponse(
                     status = status,
@@ -150,6 +151,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
                 }
 
                 response.status.value shouldBe status
+                response.contentType().toString() shouldBe "application/problem+json"
                 response.bodyAsText() shouldNotContain "secret-token-value"
                 response.bodyAsText() shouldNotContain "credential"
             }
