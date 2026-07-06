@@ -23,7 +23,7 @@ fun Application.configureStatusPages() {
             call.respondProblem(
                 Problem(
                     status = HttpStatusCode.InternalServerError.value,
-                    type = "internal-error",
+                    code = "INTERNAL_ERROR",
                     title = "Internal Server Error",
                     detail = "予期しないエラーが発生しました",
                 )

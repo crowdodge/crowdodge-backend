@@ -112,7 +112,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondUserError(
         is UserError.AuthorizationError -> respondProblem(
             Problem(
                 status = HttpStatusCode.Forbidden.value,
-                type = error.code,
+                code = error.code,
                 title = "Forbidden",
                 detail = "Google Calendar への権限が不足しています",
             ),
@@ -120,7 +120,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondUserError(
         is UserError.ValidationError -> respondProblem(
             Problem(
                 status = HttpStatusCode.BadRequest.value,
-                type = error.code,
+                code = error.code,
                 title = "Bad Request",
                 detail = "リクエストが不正です",
             ),
@@ -130,7 +130,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondUserError(
         is UserError.ConflictError -> respondProblem(
             Problem(
                 status = HttpStatusCode.BadGateway.value,
-                type = error.code,
+                code = error.code,
                 title = "Bad Gateway",
                 detail = "Google Calendar selection could not be committed",
             ),
@@ -142,7 +142,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondGoogleCale
     respondProblem(
         Problem(
             status = HttpStatusCode.GatewayTimeout.value,
-            type = "google-calendar-timeout",
+            code = "GOOGLE_CALENDAR_TIMEOUT",
             title = "Gateway Timeout",
             detail = "Google Calendar request timed out",
         ),
@@ -153,7 +153,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondGoogleCale
     respondProblem(
         Problem(
             status = HttpStatusCode.BadGateway.value,
-            type = "google-calendar-error",
+            code = "GOOGLE_CALENDAR_ERROR",
             title = "Bad Gateway",
             detail = "Google Calendar request failed",
         ),
@@ -164,7 +164,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondGoogleReau
     respondProblem(
         Problem(
             status = HttpStatusCode.Unauthorized.value,
-            type = "GOOGLE_REAUTH_REQUIRED",
+            code = "GOOGLE_REAUTH_REQUIRED",
             title = "Unauthorized",
             detail = "Google の再認可が必要です",
         ),
@@ -173,17 +173,22 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondGoogleReau
 
 private suspend fun io.ktor.server.application.ApplicationCall.respondUnauthorized() {
     respondProblem(
-        Problem(HttpStatusCode.Unauthorized.value, "unauthorized", "Unauthorized", "認証が必要です"),
+        Problem(
+            status = HttpStatusCode.Unauthorized.value,
+            code = "UNAUTHORIZED",
+            title = "Unauthorized",
+            detail = "認証が必要です",
+        ),
     )
 }
 
 private suspend fun io.ktor.server.application.ApplicationCall.respondBadRequest() {
     respondProblem(
         Problem(
-            HttpStatusCode.BadRequest.value,
-            "invalid-google-calendar-selection-request",
-            "Bad Request",
-            "リクエストが不正です",
+            status = HttpStatusCode.BadRequest.value,
+            code = "INVALID_GOOGLE_CALENDAR_SELECTION_REQUEST",
+            title = "Bad Request",
+            detail = "リクエストが不正です",
         ),
     )
 }

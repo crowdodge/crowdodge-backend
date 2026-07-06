@@ -119,7 +119,7 @@ fun Application.configureUserRouting() {
                         ?: return@get call.respondProblem(
                             Problem(
                                 status = 401,
-                                type = "unauthorized",
+                                code = "UNAUTHORIZED",
                                 title = "Unauthorized",
                                 detail = "認証が必要です",
                             ),
@@ -170,7 +170,7 @@ private suspend inline fun <reified T : Any> io.ktor.server.application.Applicat
             respondProblem(
                 Problem(
                     status = 400,
-                    type = "invalid-request",
+                    code = "INVALID_REQUEST",
                     title = "Bad Request",
                     detail = "リクエスト形式が不正です",
                 ),
@@ -185,49 +185,49 @@ private fun UserError.toProblem(): Problem = when (this) {
 
     is UserError.ConflictError -> Problem(
         status = 409,
-        type = code,
+        code = code,
         title = "Conflict",
         detail = "競合するリソースが存在します",
     )
 
     is UserError.AuthenticationError.InvalidGoogleToken -> Problem(
         status = 401,
-        type = code,
+        code = code,
         title = "Unauthorized",
         detail = "Google 認証に失敗しました",
     )
 
     is UserError.AuthenticationError.InvalidRefreshToken -> Problem(
         status = 401,
-        type = code,
+        code = code,
         title = "Unauthorized",
         detail = "refresh token が無効です",
     )
 
     is UserError.AuthenticationError.MissingGoogleScope -> Problem(
         status = 403,
-        type = code,
+        code = code,
         title = "Forbidden",
         detail = "必要な Google scope が不足しています",
     )
 
     is UserError.AuthorizationError.InsufficientCalendarAccess -> Problem(
         status = 403,
-        type = code,
+        code = code,
         title = "Forbidden",
         detail = "Google カレンダーの編集権限がありません",
     )
 
     is UserError.ExternalError.GoogleOAuthError -> Problem(
         status = 502,
-        type = code,
+        code = code,
         title = "Bad Gateway",
         detail = "Google OAuth 連携に失敗しました",
     )
 
     is UserError.ExternalError.GoogleCalendarTimeoutError -> Problem(
         status = 504,
-        type = code,
+        code = code,
         title = "Gateway Timeout",
         detail = "Google Calendar request timed out",
     )
@@ -236,7 +236,7 @@ private fun UserError.toProblem(): Problem = when (this) {
 private fun validationProblem(violations: List<Problem.Violation>): Problem =
     Problem(
         status = 400,
-        type = "validation-error",
+        code = "VALIDATION_ERROR",
         title = "Bad Request",
         detail = "入力値が不正です",
         violations = violations,
@@ -250,9 +250,9 @@ private fun MutableList<Problem.Violation>.addIfInvalid(
 ) {
     val trimmed = value?.trim() ?: return
     when {
-        trimmed.isEmpty() -> add(Problem.Violation(field = field, message = "must-not-be-blank"))
+        trimmed.isEmpty() -> add(Problem.Violation(field = field, message = "MUST_NOT_BE_BLANK"))
         trimmed.length > maxLength -> add(
-            Problem.Violation(field = field, message = "must-be-at-most-$maxLength-chars")
+            Problem.Violation(field = field, message = "MUST_BE_AT_MOST_${maxLength}_CHARS")
         )
     }
 }

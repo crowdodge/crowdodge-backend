@@ -100,7 +100,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.proxy(
         respondProblem(
             Problem(
                 status = HttpStatusCode.Unauthorized.value,
-                type = "GOOGLE_REAUTH_REQUIRED",
+                code = "GOOGLE_REAUTH_REQUIRED",
                 title = "Unauthorized",
                 detail = "Google の再認可が必要です",
             ),
@@ -111,7 +111,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.proxy(
         respondProblem(
             Problem(
                 status = response.status,
-                type = "google-calendar-error",
+                code = "GOOGLE_CALENDAR_ERROR",
                 title = HttpStatusCode.fromValue(response.status).description,
                 detail = "Google Calendar request failed",
             ),
@@ -133,7 +133,7 @@ private suspend fun io.ktor.server.application.ApplicationCall.receiveLimitedBod
             respondProblem(
                 Problem(
                     status = HttpStatusCode.PayloadTooLarge.value,
-                    type = "payload-too-large",
+                    code = "PAYLOAD_TOO_LARGE",
                     title = "Payload Too Large",
                     detail = "リクエストbodyが大きすぎます",
                 ),
@@ -152,17 +152,22 @@ private suspend fun io.ktor.server.application.ApplicationCall.respondProxy(resp
 
 private suspend fun io.ktor.server.application.ApplicationCall.respondUnauthorized() {
     respondProblem(
-        Problem(HttpStatusCode.Unauthorized.value, "unauthorized", "Unauthorized", "認証が必要です"),
+        Problem(
+            status = HttpStatusCode.Unauthorized.value,
+            code = "UNAUTHORIZED",
+            title = "Unauthorized",
+            detail = "認証が必要です",
+        ),
     )
 }
 
 private suspend fun io.ktor.server.application.ApplicationCall.respondBadRequest() {
     respondProblem(
         Problem(
-            HttpStatusCode.BadRequest.value,
-            "invalid-calendar-proxy-request",
-            "Bad Request",
-            "リクエストが不正です",
+            status = HttpStatusCode.BadRequest.value,
+            code = "INVALID_CALENDAR_PROXY_REQUEST",
+            title = "Bad Request",
+            detail = "リクエストが不正です",
         ),
     )
 }

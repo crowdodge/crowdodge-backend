@@ -167,7 +167,9 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
             }
 
             response.status shouldBe HttpStatusCode.Unauthorized
-            response.bodyAsText() shouldContain "GOOGLE_REAUTH_REQUIRED"
+            response.bodyAsText() shouldContain "\"code\":\"GOOGLE_REAUTH_REQUIRED\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/GOOGLE_REAUTH_REQUIRED\""
         }
     }
 
@@ -187,7 +189,9 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
             }
 
             response.status shouldBe HttpStatusCode.Unauthorized
-            response.bodyAsText() shouldContain "GOOGLE_REAUTH_REQUIRED"
+            response.bodyAsText() shouldContain "\"code\":\"GOOGLE_REAUTH_REQUIRED\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/GOOGLE_REAUTH_REQUIRED\""
         }
     }
 
@@ -212,7 +216,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
 
                 response.status shouldBe expectedStatus
                 if (expectedStatus == HttpStatusCode.Unauthorized) {
-                    response.bodyAsText() shouldContain "GOOGLE_REAUTH_REQUIRED"
+                    response.bodyAsText() shouldContain "\"code\":\"GOOGLE_REAUTH_REQUIRED\""
                 }
             }
         }
@@ -249,6 +253,9 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
             }
 
             response.status shouldBe HttpStatusCode.GatewayTimeout
+            response.bodyAsText() shouldContain "\"code\":\"GOOGLE_CALENDAR_TIMEOUT\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/GOOGLE_CALENDAR_TIMEOUT\""
         }
     }
 
@@ -284,6 +291,9 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
             }
 
             response.status shouldBe HttpStatusCode.GatewayTimeout
+            response.bodyAsText() shouldContain "\"code\":\"GOOGLE_CALENDAR_TIMEOUT\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/GOOGLE_CALENDAR_TIMEOUT\""
         }
     }
 })
