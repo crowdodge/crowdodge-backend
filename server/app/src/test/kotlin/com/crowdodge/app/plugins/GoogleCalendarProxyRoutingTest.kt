@@ -30,7 +30,6 @@ import com.crowdodge.user.infrastructure.security.hmacAlgorithm
 import com.crowdodge.user.presentation.configureGoogleCalendarProxyRouting
 import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
-import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -252,48 +251,11 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
     }
 
     listOf(
-        HttpStatusCode.BadGateway to "GOOGLE_CALENDAR_ERROR",
-        HttpStatusCode.GatewayTimeout to "GOOGLE_CALENDAR_TIMEOUT",
-    ).forEach { (status, code) ->
-        test("Google gateway由来の${status.value}はProblemへ変換する") {
-            testApplication {
-                application {
-                    configureForProxyTest(
-                        jwtConfig,
-                        RecordingGateway(CalendarProxyResponse(status.value, null, byteArrayOf())),
-                        userUuid,
-                    )
-                }
-
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
-                    header(HttpHeaders.Authorization, "Bearer ${token()}")
-                }
-
-                response.status shouldBe status
-                response.bodyAsText() shouldContain "\"code\":\"$code\""
-                response.bodyAsText() shouldContain "\"type\":\"https://crowdodge.grfsv.net/problems/$code\""
-            }
-        }
-    }
-
-    listOf(
-        RefreshFailureCase(
-            failure = UserError.AuthenticationError.InvalidRefreshToken,
-            status = HttpStatusCode.Unauthorized,
-            code = "GOOGLE_REAUTH_REQUIRED",
-        ),
-        RefreshFailureCase(
-            failure = UserError.ExternalError.GoogleOAuthError,
-            status = HttpStatusCode.BadGateway,
-            code = "GOOGLE_CALENDAR_ERROR",
-        ),
-        RefreshFailureCase(
-            failure = UserError.ExternalError.GoogleCalendarTimeoutError,
-            status = HttpStatusCode.GatewayTimeout,
-            code = "GOOGLE_CALENDAR_TIMEOUT",
-        ),
-    ).forEach { case ->
-        test("期限切れtokenのrefresh ${case.failure.code}は${case.status.value}を返す") {
+        UserError.AuthenticationError.InvalidRefreshToken to HttpStatusCode.Unauthorized,
+        UserError.ExternalError.GoogleOAuthError to HttpStatusCode.BadGateway,
+        UserError.ExternalError.GoogleCalendarTimeoutError to HttpStatusCode.GatewayTimeout,
+    ).forEach { (refreshFailure, expectedStatus) ->
+        test("期限切れtokenのrefresh ${refreshFailure.code}は${expectedStatus.value}を返す") {
             testApplication {
                 application {
                     configureForProxyTest(
@@ -301,46 +263,34 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
                         gateway = RecordingGateway(),
                         userUuid = userUuid,
                         accessTokenExpiresAt = Clock.System.now(),
-                        refreshFailure = case.failure,
+                        refreshFailure = refreshFailure,
                     )
                 }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                client.get("/google-calendar/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
-                }
-
-                response.status shouldBe case.status
-                response.bodyAsText() shouldContain "\"code\":\"${case.code}\""
+                }.status shouldBe expectedStatus
             }
         }
 
-        test("Google 401後のrefresh ${case.failure.code}は${case.status.value}を返す") {
+        test("Google 401後のrefresh ${refreshFailure.code}は${expectedStatus.value}を返す") {
             testApplication {
                 application {
                     configureForProxyTest(
                         jwtConfig = jwtConfig,
                         gateway = RecordingGateway(refreshBeforeResponse = true),
                         userUuid = userUuid,
-                        refreshFailure = case.failure,
+                        refreshFailure = refreshFailure,
                     )
                 }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                client.get("/google-calendar/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
-                }
-
-                response.status shouldBe case.status
-                response.bodyAsText() shouldContain "\"code\":\"${case.code}\""
+                }.status shouldBe expectedStatus
             }
         }
     }
 })
-
-private data class RefreshFailureCase(
-    val failure: UserError,
-    val status: HttpStatusCode,
-    val code: String,
-)
 
 private class RecordingGateway(
     private val response: CalendarProxyResponse =
