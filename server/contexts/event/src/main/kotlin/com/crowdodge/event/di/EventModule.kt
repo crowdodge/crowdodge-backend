@@ -38,6 +38,7 @@ fun eventModule() = module {
             events = get(),
             synchronizer = get(),
             connections = get(),
+            transactions = get(),
             materializationWindowDays = get<GoogleCalendarConfig>().fullSyncWindowDays,
         )
     }
