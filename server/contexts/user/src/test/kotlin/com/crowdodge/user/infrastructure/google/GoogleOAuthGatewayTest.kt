@@ -128,6 +128,25 @@ class GoogleOAuthGatewayTest : FunSpec({
         requests shouldBe listOf("POST /token", "GET /jwks")
     }
 
+    test("serverAuthCodeフローでは redirect_uri と code_verifier を form に含めない") {
+        val keys = rsaKeyPair()
+        val gateway = GoogleOAuthTokenGateway(
+            config = GoogleOAuthConfig(
+                tokenUrl = "https://oauth.example/token",
+                jwksUrl = "https://oauth.example/jwks",
+                clientId = "google-client-id",
+                clientSecret = "google-client-secret",
+            ),
+            httpClient = HttpClient(serverAuthCodeExchangeEngine(keys)),
+            clock = fixedClock("2026-06-28T00:00:00Z"),
+        )
+
+        val result = gateway.exchange("server-auth-code", null, null)
+
+        result.isRight() shouldBe true
+        result.getOrNull()!!.identity.googleSubject shouldBe "google-sub"
+    }
+
     test("audience不一致のID tokenを拒否する") {
         val keys = rsaKeyPair()
         val gateway = GoogleOAuthTokenGateway(
@@ -663,6 +682,45 @@ class GoogleOAuthGatewayTest : FunSpec({
 
 private fun fixedClock(value: String): Clock = object : Clock {
     override fun now(): Instant = Instant.parse(value)
+}
+
+/** serverAuthCode フロー（redirect_uri / code_verifier なし）の token 交換を検証する MockEngine。 */
+private fun serverAuthCodeExchangeEngine(keys: KeyPair): MockEngine = MockEngine { request ->
+    when (request.url.encodedPath) {
+        "/token" -> {
+            val form = request.body as FormDataContent
+            val parameters: Parameters = form.formData
+            parameters.getAll("grant_type") shouldBe listOf("authorization_code")
+            parameters.getAll("code") shouldBe listOf("server-auth-code")
+            parameters.getAll("client_id") shouldBe listOf("google-client-id")
+            parameters.get("redirect_uri") shouldBe null
+            parameters.get("code_verifier") shouldBe null
+            parameters.getAll("client_secret") shouldBe listOf("google-client-secret")
+
+            respond(
+                content = """
+                    {
+                      "access_token":"google-access",
+                      "refresh_token":"google-refresh",
+                      "expires_in":3600,
+                      "scope":"openid email profile https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly",
+                      "id_token":"${idToken(keys, audience = "google-client-id")}"
+                    }
+                """.trimIndent(),
+                headers = headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString()),
+            )
+        }
+
+        "/jwks" -> respond(
+            content = jwks(keys),
+            headers = headersOf(
+                HttpHeaders.ContentType to listOf(ContentType.Application.Json.toString()),
+                HttpHeaders.CacheControl to listOf(CacheControl.MaxAge(maxAgeSeconds = 300).toString()),
+            ),
+        )
+
+        else -> error("unexpected request: ${request.method.value} ${request.url}")
+    }
 }
 
 private fun rsaKeyPair(): KeyPair =

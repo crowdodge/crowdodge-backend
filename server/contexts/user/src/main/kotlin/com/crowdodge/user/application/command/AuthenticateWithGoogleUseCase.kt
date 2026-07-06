@@ -24,10 +24,14 @@ import com.crowdodge.user.domain.repository.UserCalendarRepository
 import com.crowdodge.user.domain.repository.UserGoogleCredentialRepository
 import com.crowdodge.user.domain.repository.UserRepository
 
+/**
+ * 主フローは serverAuthCode（モバイル SDK）で、[redirectUri] と [codeVerifier] は null。
+ * デバッグ用 PKCE フローでのみ両方を指定する。
+ */
 data class AuthenticateWithGoogleCommand(
     val authorizationCode: String,
-    val redirectUri: String,
-    val codeVerifier: String,
+    val redirectUri: String?,
+    val codeVerifier: String?,
 )
 
 data class AuthenticateWithGoogleResult(

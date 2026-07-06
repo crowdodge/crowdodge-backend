@@ -63,8 +63,8 @@ class GoogleOAuthTokenGateway(
     @Suppress("ReturnCount")
     override suspend fun exchange(
         authorizationCode: String,
-        redirectUri: String,
-        codeVerifier: String,
+        redirectUri: String?,
+        codeVerifier: String?,
     ): Either<UserError, GoogleAuthorization> {
         val response = runCatching {
             httpClient.post(config.tokenUrl) {
@@ -74,8 +74,13 @@ class GoogleOAuthTokenGateway(
                             append("grant_type", "authorization_code")
                             append("code", authorizationCode)
                             append("client_id", config.clientId)
-                            append("redirect_uri", redirectUri)
-                            append("code_verifier", codeVerifier)
+                            // 主フロー(serverAuthCode)では送らず、デバッグ用 PKCE フローでのみ転送する
+                            if (redirectUri != null) {
+                                append("redirect_uri", redirectUri)
+                            }
+                            if (codeVerifier != null) {
+                                append("code_verifier", codeVerifier)
+                            }
                             if (config.clientSecret.isNotBlank()) {
                                 append("client_secret", config.clientSecret)
                             }

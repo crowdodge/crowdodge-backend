@@ -52,8 +52,8 @@ fun Application.configureUserRouting() {
                 authenticateWithGoogleUseCase.handle(
                     AuthenticateWithGoogleCommand(
                         authorizationCode = request.authorizationCode.trim(),
-                        redirectUri = request.redirectUri.trim(),
-                        codeVerifier = request.codeVerifier.trim(),
+                        redirectUri = request.redirectUri?.trim(),
+                        codeVerifier = request.codeVerifier?.trim(),
                     ),
                 ).fold(
                     ifLeft = { call.respondProblem(it.toProblem()) },
@@ -132,11 +132,15 @@ fun Application.configureUserRouting() {
     }
 }
 
+/**
+ * 主フローはモバイル SDK の serverAuthCode（[authorizationCode] のみ送る）。
+ * [redirectUri] と [codeVerifier] はデバッグ用 PKCE フローでのみ使用する。
+ */
 @Serializable
 data class GoogleLoginRequest(
     val authorizationCode: String,
-    val redirectUri: String,
-    val codeVerifier: String,
+    val redirectUri: String? = null,
+    val codeVerifier: String? = null,
 )
 
 @Serializable
@@ -238,12 +242,13 @@ private fun validationProblem(violations: List<Problem.Violation>): Problem =
         violations = violations,
     )
 
+/** [value] が null の場合は任意フィールドの省略として検証しない。 */
 private fun MutableList<Problem.Violation>.addIfInvalid(
     field: String,
-    value: String,
+    value: String?,
     maxLength: Int = DEFAULT_MAX_LENGTH,
 ) {
-    val trimmed = value.trim()
+    val trimmed = value?.trim() ?: return
     when {
         trimmed.isEmpty() -> add(Problem.Violation(field = field, message = "must-not-be-blank"))
         trimmed.length > maxLength -> add(
