@@ -101,6 +101,35 @@ class GoogleCalendarSyncLifecycleServiceTest : FunSpec({
         states.deleted shouldContainExactly listOf(calendarUuid)
     }
 
+    test("reconcileは同期状態一覧をreadOnlyトランザクション内で取得する") {
+        val transactions = LifecycleTransactionGuard()
+        val states = LifecycleStatePort(listAllGuard = transactions::requireReadOnly)
+
+        lifecycle(states = states, transactions = transactions).reconcile(emptyList())
+    }
+
+    test("deprovisionSyncは予定取得と全削除と同期状態削除を同じwriteトランザクションで行う") {
+        val calendarUuid = UserCalendarUuid(Uuid.random())
+        val connection = CalendarConnection(calendarId = "calendar-id", accessToken = "access-token")
+        val transactions = LifecycleTransactionGuard()
+        val transactionIds = mutableListOf<Int>()
+        val states = LifecycleStatePort(
+            initial = state(calendarUuid, channelId = "channel-1", resourceId = "resource-1"),
+            deleteGuard = { transactionIds += transactions.requireWrite() },
+        )
+        val events = LifecycleEventRepository(
+            existingEventUuids = listOf(EventUuid.new(), EventUuid.new()),
+            findAllGuard = { transactionIds += transactions.requireWrite() },
+            deleteGuard = { transactionIds += transactions.requireWrite() },
+        )
+
+        lifecycle(states = states, events = events, transactions = transactions)
+            .deprovisionSync(DeprovisionGoogleCalendarSync(calendarUuid, connection))
+
+        transactionIds.size shouldBe 4
+        transactionIds.distinct().size shouldBe 1
+    }
+
     test("provisionSyncは状態保存例外時に開始済みwatchを停止して例外を再送出する") {
         val calendarUuid = UserCalendarUuid(Uuid.random())
         val connection = CalendarConnection(calendarId = "calendar-id", accessToken = "access-token")
@@ -421,6 +450,7 @@ private fun lifecycle(
     fullSyncResult: Either<EventError.ExternalError, CalendarSyncBatch> =
         EventError.ExternalError.GoogleCalendarError.left(),
     fullSyncFailure: Throwable? = null,
+    transactions: TransactionRunner = DirectLifecycleTransactionRunner,
 ): GoogleCalendarSyncLifecycleService =
     GoogleCalendarSyncLifecycleService(
         watches = watches,
@@ -428,6 +458,7 @@ private fun lifecycle(
         events = events,
         synchronizer = unusedSynchronizer(states, events, fullSyncResult, fullSyncFailure),
         connections = connections,
+        transactions = transactions,
         clock = LifecycleClock,
     )
 
@@ -480,6 +511,8 @@ private class LifecycleStatePort(
     private val replaceResult: Boolean = true,
     private val replaceFailure: Throwable? = null,
     private val deletionOrder: MutableList<String>? = null,
+    private val listAllGuard: () -> Unit = {},
+    private val deleteGuard: () -> Unit = {},
 ) : CalendarSyncStatePort {
     val saved = mutableListOf<CalendarSyncState>()
     val deletedIfChannelMatches = mutableListOf<Pair<UserCalendarUuid, String>>()
@@ -523,18 +556,24 @@ private class LifecycleStatePort(
     }
 
     override suspend fun delete(userCalendarUuid: UserCalendarUuid): Boolean {
+        deleteGuard()
         deletionOrder?.add("state")
         deleted += userCalendarUuid
         return true
     }
 
-    override suspend fun listAll(): List<CalendarSyncState> = allStates
+    override suspend fun listAll(): List<CalendarSyncState> {
+        listAllGuard()
+        return allStates
+    }
 }
 
 private class LifecycleEventRepository(
     existingEventUuids: List<EventUuid> = emptyList(),
     private val deleteFailure: Throwable? = null,
     private val deletionOrder: MutableList<String>? = null,
+    private val findAllGuard: () -> Unit = {},
+    private val deleteGuard: () -> Unit = {},
 ) : EventRepository {
     private val events = existingEventUuids.map {
         Event.reconstitute(
@@ -567,6 +606,7 @@ private class LifecycleEventRepository(
     ) = Unit
 
     override suspend fun delete(userCalendarUuid: UserCalendarUuid, eventUuid: EventUuid) {
+        deleteGuard()
         deleteFailure?.let { throw it }
         deletionOrder?.add("event")
         deletedEvents += userCalendarUuid to eventUuid
@@ -579,8 +619,10 @@ private class LifecycleEventRepository(
         googleEventIds: List<GoogleEventId>,
     ): List<Event> = emptyList()
 
-    override suspend fun findAllByUserCalendarUuid(userCalendarUuid: UserCalendarUuid): List<Event> =
-        events.map { it.copyFor(userCalendarUuid) }
+    override suspend fun findAllByUserCalendarUuid(userCalendarUuid: UserCalendarUuid): List<Event> {
+        findAllGuard()
+        return events.map { it.copyFor(userCalendarUuid) }
+    }
 
     private fun Event.copyFor(userCalendarUuid: UserCalendarUuid): Event =
         Event.reconstitute(eventUuid, userCalendarUuid, googleEventId, recurringEventId, originalStart, eventContent)
@@ -640,6 +682,45 @@ private class RecordingLifecycleConnectionProvider(
         return connections[userCalendarUuid]?.right()
             ?: EventError.ExternalError.GoogleCalendarError.left()
     }
+}
+
+private object DirectLifecycleTransactionRunner : TransactionRunner {
+    override suspend fun <T> inTransaction(block: suspend () -> T): T = block()
+
+    override suspend fun <T> readOnly(block: suspend () -> T): T = block()
+}
+
+private class LifecycleTransactionGuard : TransactionRunner {
+    private var nextTransactionId = 0
+    private var current: TransactionContext? = null
+
+    override suspend fun <T> inTransaction(block: suspend () -> T): T =
+        within(TransactionContext(++nextTransactionId, readOnly = false), block)
+
+    override suspend fun <T> readOnly(block: suspend () -> T): T =
+        within(TransactionContext(++nextTransactionId, readOnly = true), block)
+
+    fun requireReadOnly() {
+        check(current?.readOnly == true) { "read-only transaction required" }
+    }
+
+    fun requireWrite(): Int {
+        val transaction = checkNotNull(current) { "write transaction required" }
+        check(!transaction.readOnly) { "write transaction required" }
+        return transaction.id
+    }
+
+    private suspend fun <T> within(context: TransactionContext, block: suspend () -> T): T {
+        check(current == null) { "nested transaction is not supported" }
+        current = context
+        return try {
+            block()
+        } finally {
+            current = null
+        }
+    }
+
+    private data class TransactionContext(val id: Int, val readOnly: Boolean)
 }
 
 private fun state(

@@ -11,6 +11,7 @@ import com.crowdodge.event.application.port.CalendarWatchRegistrationGateway
 import com.crowdodge.event.domain.error.EventError
 import com.crowdodge.event.domain.model.UserCalendarUuid
 import com.crowdodge.event.domain.repository.EventRepository
+import com.crowdodge.shared.kernel.TransactionRunner
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
@@ -26,6 +27,7 @@ class GoogleCalendarSyncLifecycleService(
     private val events: EventRepository,
     private val synchronizer: GoogleCalendarEventSynchronizer,
     private val connections: CalendarConnectionProvider,
+    private val transactions: TransactionRunner,
     private val clock: Clock = Clock.System,
     private val materializationWindowDays: Int = DEFAULT_MATERIALIZATION_WINDOW_DAYS,
 ) {
@@ -35,17 +37,19 @@ class GoogleCalendarSyncLifecycleService(
             val registration = watches.startWatch(request.connection).bind()
             val materializedUntil = clock.now() + materializationWindowDays.days
             try {
-                states.saveProvisioned(
-                    CalendarSyncState(
-                        userCalendarUuid = request.userCalendarUuid,
-                        syncToken = null,
-                        materializedUntil = materializedUntil,
-                        watchChannelId = registration.channelId,
-                        watchResourceId = registration.resourceId,
-                        watchChannelToken = registration.channelToken,
-                        watchExpiration = registration.expiration,
-                    ),
-                )
+                transactions.inTransaction {
+                    states.saveProvisioned(
+                        CalendarSyncState(
+                            userCalendarUuid = request.userCalendarUuid,
+                            syncToken = null,
+                            materializedUntil = materializedUntil,
+                            watchChannelId = registration.channelId,
+                            watchResourceId = registration.resourceId,
+                            watchChannelToken = registration.channelToken,
+                            watchExpiration = registration.expiration,
+                        ),
+                    )
+                }
             } catch (error: Throwable) {
                 stopWatchAfterFailure(
                     request.connection,
@@ -68,14 +72,18 @@ class GoogleCalendarSyncLifecycleService(
     suspend fun rollbackProvisioning(provisioned: ProvisionedGoogleCalendarSync) {
         stopWatchBestEffort(provisioned.connection, provisioned.channelId, provisioned.resourceId)
         runCatchingPreservingCancellation {
-            states.deleteIfChannelMatches(provisioned.userCalendarUuid, provisioned.channelId)
+            transactions.inTransaction {
+                states.deleteIfChannelMatches(provisioned.userCalendarUuid, provisioned.channelId)
+            }
         }.onFailure { error ->
             logger.warn("Failed to rollback Google Calendar sync state", error)
         }
     }
 
     suspend fun deprovisionSync(request: DeprovisionGoogleCalendarSync) {
-        val state = runCatchingPreservingCancellation { states.find(request.userCalendarUuid) }
+        val state = runCatchingPreservingCancellation {
+            transactions.readOnly { states.find(request.userCalendarUuid) }
+        }
             .onFailure { error -> logger.warn("Failed to load Google Calendar sync state", error) }
             .getOrNull()
         val channelId = state?.watchChannelId
@@ -83,9 +91,7 @@ class GoogleCalendarSyncLifecycleService(
         if (channelId != null && resourceId != null) {
             stopWatchBestEffort(request.connection, channelId, resourceId)
         }
-        if (deleteEventsBestEffort(request.userCalendarUuid)) {
-            deleteStateBestEffort(request.userCalendarUuid)
-        }
+        deleteCalendarDataBestEffort(request.userCalendarUuid)
     }
 
     suspend fun reconcile(
@@ -93,7 +99,7 @@ class GoogleCalendarSyncLifecycleService(
         preservedUserCalendarUuids: Set<UserCalendarUuid> = emptySet(),
     ): ReconcileGoogleCalendarSyncResult {
         val selectedByUuid = selected.associateBy { it.userCalendarUuid }
-        val currentStates = states.listAll().associateBy { it.userCalendarUuid }
+        val currentStates = transactions.readOnly { states.listAll() }.associateBy { it.userCalendarUuid }
         var succeeded = 0
         var failed = 0
 
@@ -219,7 +225,9 @@ class GoogleCalendarSyncLifecycleService(
             return false
         }
         val replaced = try {
-            states.replaceWatch(selected.userCalendarUuid, oldChannelId, newWatch)
+            transactions.inTransaction {
+                states.replaceWatch(selected.userCalendarUuid, oldChannelId, newWatch)
+            }
         } catch (error: CancellationException) {
             stopWatchAfterFailure(selected.connection, newWatch.channelId, newWatch.resourceId, error)
             throw error
@@ -252,30 +260,31 @@ class GoogleCalendarSyncLifecycleService(
         if (connection != null && channelId != null && resourceId != null) {
             succeeded = stopWatchBestEffort(connection, channelId, resourceId) && succeeded
         }
-        if (!deleteEventsBestEffort(state.userCalendarUuid)) {
-            return false
-        }
-        return deleteStateBestEffort(state.userCalendarUuid) && succeeded
+        return deleteCalendarDataBestEffort(state.userCalendarUuid) && succeeded
     }
 
-    private suspend fun deleteEventsBestEffort(userCalendarUuid: UserCalendarUuid): Boolean {
-        val savedEvents = runCatchingPreservingCancellation { events.findAllByUserCalendarUuid(userCalendarUuid) }
-            .onFailure { error -> logger.warn("Failed to list saved Google Calendar events", error) }
-            .getOrElse { return false }
-        var succeeded = true
-        savedEvents.forEach { event ->
-            runCatchingPreservingCancellation { events.delete(userCalendarUuid, event.eventUuid) }
-                .onFailure { error ->
-                    succeeded = false
-                    logger.warn("Failed to delete saved Google Calendar event", error)
+    private suspend fun deleteCalendarDataBestEffort(userCalendarUuid: UserCalendarUuid): Boolean =
+        runCatchingPreservingCancellation {
+            transactions.inTransaction {
+                val savedEvents = runCatchingPreservingCancellation {
+                    events.findAllByUserCalendarUuid(userCalendarUuid)
+                }.onFailure { error ->
+                    logger.warn("Failed to list saved Google Calendar events", error)
+                }.getOrThrow()
+                savedEvents.forEach { event ->
+                    runCatchingPreservingCancellation {
+                        events.delete(userCalendarUuid, event.eventUuid)
+                    }.onFailure { error ->
+                        logger.warn("Failed to delete saved Google Calendar event", error)
+                    }.getOrThrow()
                 }
+                runCatchingPreservingCancellation {
+                    states.delete(userCalendarUuid)
+                }.onFailure { error ->
+                    logger.warn("Failed to delete Google Calendar sync state", error)
+                }.getOrThrow()
+            }
         }
-        return succeeded
-    }
-
-    private suspend fun deleteStateBestEffort(userCalendarUuid: UserCalendarUuid): Boolean =
-        runCatchingPreservingCancellation { states.delete(userCalendarUuid) }
-            .onFailure { error -> logger.warn("Failed to delete Google Calendar sync state", error) }
             .getOrDefault(false)
 
     private suspend fun stopWatchBestEffort(

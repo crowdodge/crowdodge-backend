@@ -268,6 +268,7 @@ private fun coordinatorFixture(existingIds: List<String> = emptyList()): Coordin
         connections = CalendarConnectionProvider {
             CalendarConnection(it.value.toString(), "access-token").right()
         },
+        transactions = transactions,
     )
     return CoordinatorFixture(
         userUuid,

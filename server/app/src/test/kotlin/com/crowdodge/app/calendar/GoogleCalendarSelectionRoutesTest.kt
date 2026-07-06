@@ -363,6 +363,7 @@ private class SelectionRouteFixture(
         events = RouteEventRepository(),
         synchronizer = synchronizer,
         connections = CalendarConnectionProvider { CalendarConnection(it.value.toString(), "token").right() },
+        transactions = transactions,
     )
     val coordinator = ReplaceGoogleCalendarSelectionCoordinator(selectionService, lifecycle)
 }

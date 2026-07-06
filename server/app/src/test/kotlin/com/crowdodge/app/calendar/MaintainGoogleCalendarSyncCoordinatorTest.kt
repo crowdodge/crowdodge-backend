@@ -258,6 +258,7 @@ private fun maintenanceFixture(
         events = events,
         synchronizer = synchronizer,
         connections = connections,
+        transactions = transactions,
         clock = MaintenanceClock,
     )
     return MaintenanceFixture(
