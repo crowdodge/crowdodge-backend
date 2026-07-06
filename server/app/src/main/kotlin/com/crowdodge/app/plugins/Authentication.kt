@@ -36,7 +36,7 @@ fun Application.configureAuthentication(jwtClock: JavaClock = JavaClock.systemUT
                 call.respondProblem(
                     Problem(
                         status = 401,
-                        type = "unauthorized",
+                        code = "UNAUTHORIZED",
                         title = "Unauthorized",
                         detail = "認証が必要です",
                     ),

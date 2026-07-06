@@ -190,7 +190,9 @@ class AuthenticationTest : FunSpec({
 
             response.status shouldBe HttpStatusCode.Unauthorized
             response.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
-            response.bodyAsText() shouldContain "\"type\":\"invalid-google-token\""
+            response.bodyAsText() shouldContain "\"code\":\"INVALID_GOOGLE_TOKEN\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/INVALID_GOOGLE_TOKEN\""
         }
     }
 
@@ -251,7 +253,9 @@ class AuthenticationTest : FunSpec({
 
             response.status shouldBe HttpStatusCode.Forbidden
             response.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
-            response.bodyAsText() shouldContain "\"type\":\"missing-google-scope\""
+            response.bodyAsText() shouldContain "\"code\":\"MISSING_GOOGLE_SCOPE\""
+            response.bodyAsText() shouldContain
+                "\"type\":\"https://crowdodge.grfsv.net/problems/MISSING_GOOGLE_SCOPE\""
         }
     }
 
@@ -292,8 +296,12 @@ class AuthenticationTest : FunSpec({
 
             blankResponse.status shouldBe HttpStatusCode.BadRequest
             blankResponse.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
+            blankResponse.bodyAsText() shouldContain "\"code\":\"VALIDATION_ERROR\""
+            blankResponse.bodyAsText() shouldContain "\"message\":\"MUST_NOT_BE_BLANK\""
             oversizedResponse.status shouldBe HttpStatusCode.BadRequest
             oversizedResponse.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
+            oversizedResponse.bodyAsText() shouldContain "\"code\":\"VALIDATION_ERROR\""
+            oversizedResponse.bodyAsText() shouldContain "\"message\":\"MUST_BE_AT_MOST_2048_CHARS\""
         }
     }
 

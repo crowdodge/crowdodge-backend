@@ -10,6 +10,9 @@ import kotlinx.serialization.json.Json
 /** `application/problem+json` メディアタイプ（RFC 9457）。 */
 val ProblemJson: ContentType = ContentType("application", "problem+json")
 
+/** 問題タイプ URI の base。API 契約の一部のため定数（環境変数にしない）。 */
+private const val PROBLEM_TYPE_BASE = "https://crowdodge.grfsv.net/problems/"
+
 private val problemJsonCodec = Json { encodeDefaults = true }
 
 /**
@@ -20,18 +23,22 @@ private val problemJsonCodec = Json { encodeDefaults = true }
 @Serializable
 data class Problem(
     val status: Int,
-    val type: String,
-    val title: String? = null,
+    val code: String,
+    val title: String,
     val detail: String? = null,
     val violations: List<Violation> = emptyList(),
 ) {
+    val type: String = PROBLEM_TYPE_BASE + code
+
     companion object {
         private const val MIN_HTTP_STATUS = 100
         private const val MAX_HTTP_STATUS = 599
+        private val CODE_PATTERN = Regex("[A-Z0-9_]+")
     }
 
     init {
         require(status in MIN_HTTP_STATUS..MAX_HTTP_STATUS) { "HTTP ステータスは 100..599 の範囲: $status" }
+        require(CODE_PATTERN.matches(code)) { "code は UPPER_SNAKE: $code" }
     }
 
     @Serializable

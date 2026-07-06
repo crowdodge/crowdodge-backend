@@ -23,6 +23,9 @@
 ## HTTP境界
 
 - HTTPレスポンスのエラー形式は Problem Details に統一する。
+- Problem Details の `code` は UPPER_SNAKE とし、クライアント分岐に使う。
+- Problem Details の `type` は `https://crowdodge.grfsv.net/problems/{CODE}` から導出する。
+- 入力一括検証などの詳細は拡張メンバー `violations` に入れる。
 - `Either.Left` から Problem Details への変換は `presentation` に置く。
 - エラー型から Problem Details への変換は `when` で網羅する。
 - 外部API例外は `infrastructure` で捕捉し、境界用のエラー型へ変換する。
