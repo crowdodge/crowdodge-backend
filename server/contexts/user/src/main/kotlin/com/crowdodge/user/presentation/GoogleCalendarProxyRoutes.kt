@@ -96,30 +96,41 @@ private suspend fun io.ktor.server.application.ApplicationCall.proxy(
             body = body,
         ),
     )
-    if (response.status == HttpStatusCode.Unauthorized.value) {
-        respondProblem(
-            Problem(
-                status = HttpStatusCode.Unauthorized.value,
-                code = "GOOGLE_REAUTH_REQUIRED",
-                title = "Unauthorized",
-                detail = "Google の再認可が必要です",
-            ),
-        )
-        return
-    }
-    if (response.status in SANITIZED_GOOGLE_ERROR_STATUSES) {
-        respondProblem(
-            Problem(
-                status = response.status,
-                code = "GOOGLE_CALENDAR_ERROR",
-                title = HttpStatusCode.fromValue(response.status).description,
-                detail = "Google Calendar request failed",
-            ),
-        )
+    proxyProblemFor(response.status)?.let {
+        respondProblem(it)
         return
     }
     respondProxy(response)
 }
+
+private fun proxyProblemFor(status: Int): Problem? =
+    when (status) {
+        HttpStatusCode.Unauthorized.value -> Problem(
+            status = HttpStatusCode.Unauthorized.value,
+            code = "GOOGLE_REAUTH_REQUIRED",
+            title = "Unauthorized",
+            detail = "Google の再認可が必要です",
+        )
+        HttpStatusCode.BadGateway.value -> Problem(
+            status = HttpStatusCode.BadGateway.value,
+            code = "GOOGLE_CALENDAR_ERROR",
+            title = "Bad Gateway",
+            detail = "Google Calendar request failed",
+        )
+        HttpStatusCode.GatewayTimeout.value -> Problem(
+            status = HttpStatusCode.GatewayTimeout.value,
+            code = "GOOGLE_CALENDAR_TIMEOUT",
+            title = "Gateway Timeout",
+            detail = "Google Calendar request timed out",
+        )
+        in SANITIZED_GOOGLE_ERROR_STATUSES -> Problem(
+            status = status,
+            code = "GOOGLE_CALENDAR_ERROR",
+            title = HttpStatusCode.fromValue(status).description,
+            detail = "Google Calendar request failed",
+        )
+        else -> null
+    }
 
 private suspend fun io.ktor.server.application.ApplicationCall.receiveLimitedBody(): ByteArray? {
     val channel = receiveChannel()
