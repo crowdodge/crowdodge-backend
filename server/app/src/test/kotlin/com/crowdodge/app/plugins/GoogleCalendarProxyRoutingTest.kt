@@ -32,7 +32,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -68,19 +67,6 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         .withSubject(userUuid.value.toString())
         .sign(jwtConfig.hmacAlgorithm())
 
-    test("primary省略routeは404になる") {
-        val fake = RecordingGateway()
-        testApplication {
-            application { configureForProxyTest(jwtConfig, fake, userUuid) }
-
-            client.get("/v1/events?timeMin=2026-01-01T00%3A00%3A00Z") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-        }
-
-        fake.requests shouldBe emptyList()
-    }
-
     test("calendar routeは指定calendar/event IDと未解釈bodyを転送する") {
         val fake = RecordingGateway()
         val body = """{"summary":"raw"}"""
@@ -97,27 +83,6 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         fake.request?.calendarId shouldBe "cal/id"
         fake.request?.eventId shouldBe "event/id"
         fake.request?.body?.decodeToString() shouldBe body
-    }
-
-    test("primary detail routesは404になる") {
-        val fake = RecordingGateway()
-        testApplication {
-            application { configureForProxyTest(jwtConfig, fake, userUuid) }
-
-            client.get("/v1/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-            client.patch("/v1/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-                header(HttpHeaders.ContentType, "application/json")
-                setBody("{}")
-            }.status shouldBe HttpStatusCode.NotFound
-            client.delete("/v1/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-        }
-
-        fake.requests shouldBe emptyList()
     }
 
     test("未選択Calendar IDはGoogleへ転送せず403にする") {

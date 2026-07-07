@@ -34,6 +34,6 @@
 
 ## 選択API
 
-- `GET /users/me/google-calendars` は Google Calendar List と保存済み選択を突合し、`selected` を含む一覧を返す。
-- `PUT /users/me/google-calendars` は `calendarIds` でユーザーの選択全体を一括置換する。
+- `GET /v1/users/me/calendars` は Google Calendar List と保存済み選択を突合し、`selected` を含む一覧を返す。
+- `PUT /v1/users/me/calendars` は `calendarIds` でユーザーの選択全体を一括置換する。
 - `calendarIds` の重複、3件超過、存在しないカレンダー、`reader` 権限のカレンダーは拒否する。

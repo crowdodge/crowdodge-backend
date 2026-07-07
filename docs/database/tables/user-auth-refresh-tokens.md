@@ -29,5 +29,5 @@
 
 - refresh tokenの平文は保存しない。
 - refresh時は使用済みtokenを失効し、新しいtokenへローテーションする。
-- logout時は対象tokenを失効する。
+- signout時は対象tokenを失効する。
 - ユーザー削除時にrefresh tokenも削除する。

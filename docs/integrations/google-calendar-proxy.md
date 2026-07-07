@@ -7,7 +7,7 @@
 
 ## 実装状況
 
-- `/google-calendar` 配下のルートは app に配線済み。
+- `/v1/calendars` 配下のルートは app に配線済み。
 - リクエスト転送、query allowlist 検証、401 時のトークン更新と再試行は実装済み。
 
 ## 概要
@@ -22,8 +22,8 @@
 
 | メソッド | パス | 対象カレンダー |
 |---|---|---|
-| GET / POST | `/google-calendar/calendars/{calendarId}/events` | `{calendarId}` |
-| GET / PATCH / DELETE | `/google-calendar/calendars/{calendarId}/events/{eventId}` | `{calendarId}` |
+| GET / POST | `/v1/calendars/{calendarId}/events` | `{calendarId}` |
+| GET / PATCH / DELETE | `/v1/calendars/{calendarId}/events/{eventId}` | `{calendarId}` |
 
 `calendarId` は利用者の `user_calendars` に存在するものだけを許可する。
 未選択の `calendarId` は `403 Forbidden` を返す。

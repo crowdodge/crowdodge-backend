@@ -45,8 +45,8 @@ user BC は保存済み scope を検証し、access token の失効まで1分以
 
 すべてのルートは `app-jwt` 認証を必須とする。
 
-- `GET /users/me/google-calendars` は Google Calendar List と `user_calendars` を突合し、カレンダーID、名前、色、primary、access role、選択状態を返す。
-- `PUT /users/me/google-calendars` は `calendarIds` で選択全体を一括置換し、成功時は `204 No Content` を返す。
+- `GET /v1/users/me/calendars` は Google Calendar List と `user_calendars` を突合し、カレンダーID、名前、色、primary、access role、選択状態を返す。
+- `PUT /v1/users/me/calendars` は `calendarIds` で選択全体を一括置換し、成功時は `204 No Content` を返す。
 - 選択数は0件から3件までとし、重複を許可しない。
 - `accessRole` が `owner` または `writer` のカレンダーだけを選択できる。
 
