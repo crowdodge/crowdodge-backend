@@ -76,7 +76,7 @@ class AuthenticationTest : FunSpec({
         refreshTokenTtl = 30.days,
     )
 
-    test("POST /auth/google は Google 認証成功時に 200 とアプリ token を返す") {
+    test("POST /v1/auth/google は Google 認証成功時に 200 とアプリ token を返す") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -86,7 +86,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -108,7 +108,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は redirectUri と codeVerifier を省略した serverAuthCode フローでも 200 を返す") {
+    test("POST /v1/auth/google は redirectUri と codeVerifier を省略した serverAuthCode フローでも 200 を返す") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -118,7 +118,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -136,7 +136,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は空文字の redirectUri を 400 Problem で拒否する") {
+    test("POST /v1/auth/google は空文字の redirectUri を 400 Problem で拒否する") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -146,7 +146,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -165,7 +165,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は不正 code を 401 Problem へ変換する") {
+    test("POST /v1/auth/google は不正 code を 401 Problem へ変換する") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -175,7 +175,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -196,7 +196,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は request body 受信中のキャンセルを 400 Problem に変換しない") {
+    test("POST /v1/auth/google は request body 受信中のキャンセルを 400 Problem に変換しない") {
         val cancellation = CancellationException("request receive cancelled")
 
         testApplication {
@@ -211,7 +211,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -228,7 +228,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は scope 不足を 403 Problem へ変換する") {
+    test("POST /v1/auth/google は scope 不足を 403 Problem へ変換する") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -238,7 +238,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.post("/auth/google") {
+            val response = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -259,7 +259,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/google は空文字と過大入力を 400 Problem で拒否する") {
+    test("POST /v1/auth/google は空文字と過大入力を 400 Problem で拒否する") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -269,7 +269,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val blankResponse = client.post("/auth/google") {
+            val blankResponse = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -281,7 +281,7 @@ class AuthenticationTest : FunSpec({
                     """.trimIndent(),
                 )
             }
-            val oversizedResponse = client.post("/auth/google") {
+            val oversizedResponse = client.post("/v1/auth/google") {
                 contentType(ContentType.Application.Json)
                 setBody(
                     """
@@ -297,15 +297,15 @@ class AuthenticationTest : FunSpec({
             blankResponse.status shouldBe HttpStatusCode.BadRequest
             blankResponse.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
             blankResponse.bodyAsText() shouldContain "\"code\":\"VALIDATION_ERROR\""
-            blankResponse.bodyAsText() shouldContain "\"message\":\"MUST_NOT_BE_BLANK\""
+            blankResponse.bodyAsText() shouldContain "\"code\":\"MUST_NOT_BE_BLANK\""
             oversizedResponse.status shouldBe HttpStatusCode.BadRequest
             oversizedResponse.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
             oversizedResponse.bodyAsText() shouldContain "\"code\":\"VALIDATION_ERROR\""
-            oversizedResponse.bodyAsText() shouldContain "\"message\":\"MUST_BE_AT_MOST_2048_CHARS\""
+            oversizedResponse.bodyAsText() shouldContain "\"code\":\"MUST_BE_AT_MOST_2048_CHARS\""
         }
     }
 
-    test("POST /auth/refresh は refresh token をローテーションする") {
+    test("POST /v1/auth/refresh は refresh token をローテーションする") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -318,7 +318,7 @@ class AuthenticationTest : FunSpec({
             val login = login(json)
             val firstRefreshToken = login.refreshToken
 
-            val response = client.post("/auth/refresh") {
+            val response = client.post("/v1/auth/refresh") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"refreshToken":"$firstRefreshToken"}""")
             }
@@ -331,7 +331,7 @@ class AuthenticationTest : FunSpec({
         }
     }
 
-    test("POST /auth/logout は 204 を返す") {
+    test("POST /v1/auth/signout は 204 を返す") {
         testApplication {
             application {
                 configureAuthenticationTestApp(
@@ -342,7 +342,7 @@ class AuthenticationTest : FunSpec({
             }
 
             val login = login(json)
-            val response = client.post("/auth/logout") {
+            val response = client.post("/v1/auth/signout") {
                 contentType(ContentType.Application.Json)
                 setBody("""{"refreshToken":"${login.refreshToken}"}""")
             }
@@ -361,7 +361,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me")
+            val response = client.get("/v1/auth/me")
 
             response.status shouldBe HttpStatusCode.Unauthorized
             response.headers[HttpHeaders.ContentType] shouldContain "application/problem+json"
@@ -381,7 +381,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me") {
+            val response = client.get("/v1/auth/me") {
                 bearerAuth(token)
             }
 
@@ -407,7 +407,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me") {
+            val response = client.get("/v1/auth/me") {
                 bearerAuth(token)
             }
 
@@ -433,7 +433,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me") {
+            val response = client.get("/v1/auth/me") {
                 bearerAuth(token)
             }
 
@@ -459,7 +459,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me") {
+            val response = client.get("/v1/auth/me") {
                 bearerAuth(token)
             }
 
@@ -484,7 +484,7 @@ class AuthenticationTest : FunSpec({
                 )
             }
 
-            val response = client.get("/auth/me") {
+            val response = client.get("/v1/auth/me") {
                 bearerAuth(token)
             }
 
@@ -565,7 +565,7 @@ private fun Instant.toJavaClock(): JavaClock =
     JavaClock.fixed(JavaInstant.parse(toString()), ZoneOffset.UTC)
 
 private suspend fun io.ktor.server.testing.ApplicationTestBuilder.login(json: Json): TokenResponseBody {
-    val response = client.post("/auth/google") {
+    val response = client.post("/v1/auth/google") {
         contentType(ContentType.Application.Json)
         setBody(
             """

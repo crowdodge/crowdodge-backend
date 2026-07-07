@@ -29,8 +29,8 @@ import java.io.ByteArrayOutputStream
 fun Application.configureGoogleCalendarProxyRouting() {
     val useCase by inject<ProxyGoogleCalendarUseCase>()
     routing {
-        authenticate(APP_JWT_AUTH_NAME) {
-            route("/google-calendar") {
+        route("/v1") {
+            authenticate(APP_JWT_AUTH_NAME) {
                 route("/calendars/{calendarId}/events") {
                     get { call.proxy(useCase, ProxyMethod.GET, call.pathParameter("calendarId"), null) }
                     post { call.proxy(useCase, ProxyMethod.POST, call.pathParameter("calendarId"), null) }

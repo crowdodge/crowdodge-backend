@@ -90,7 +90,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.get("/users/me/google-calendars") {
+            val response = client.get("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }
 
@@ -108,7 +108,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["work"]}""")
@@ -127,7 +127,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["work","work"]}""")
@@ -143,7 +143,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["readonly"]}""")
@@ -162,7 +162,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.get("/users/me/google-calendars") {
+            val response = client.get("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }
 
@@ -182,7 +182,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["work"]}""")
@@ -210,7 +210,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
             testApplication {
                 application { configureSelectionTest(jwtConfig, fixture) }
 
-                val response = client.get("/users/me/google-calendars") {
+                val response = client.get("/v1/users/me/calendars") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }
 
@@ -231,7 +231,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.get("/users/me/google-calendars") {
+            val response = client.get("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }
 
@@ -248,7 +248,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.get("/users/me/google-calendars") {
+            val response = client.get("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }
 
@@ -266,7 +266,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["work"]}""")
@@ -284,7 +284,7 @@ class GoogleCalendarSelectionRoutesTest : FunSpec({
         testApplication {
             application { configureSelectionTest(jwtConfig, fixture) }
 
-            val response = client.put("/users/me/google-calendars") {
+            val response = client.put("/v1/users/me/calendars") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody("""{"calendarIds":["work"]}""")

@@ -7,12 +7,12 @@
 
 ## 実装状況
 
-- `POST /auth/google`、`POST /auth/refresh`、`POST /auth/logout`、`GET /auth/me` は app に配線済み。
+- `POST /v1/auth/google`、`POST /v1/auth/refresh`、`POST /v1/auth/signout`、`GET /v1/auth/me` は app に配線済み。
 - 認可コード交換、ID token 検証、資格情報の暗号化保存、アプリセッション発行・更新・失効は実装済み。
 
 ## Google OAuth 認証フロー
 
-- `POST /auth/google` の主フローは **serverAuthCode フロー**とする。**PKCE フローはデバッグ・運用検証用**の補助フローとして受け付ける。
+- `POST /v1/auth/google` の主フローは **serverAuthCode フロー**とする。**PKCE フローはデバッグ・運用検証用**の補助フローとして受け付ける。
   - **serverAuthCode フロー**（主・Android / iOS）: クライアントは Google Sign-In SDK で取得した serverAuthCode を `authorizationCode` として送る。`redirectUri` と `codeVerifier` は省略する。
   - **PKCE フロー**（デバッグ用）: curl などから、ブラウザ + PKCE で取得した認可コード、redirect URI、code verifier を送る。SDK を介さずに本番エンドポイントを検証する手段として維持する。
 - リクエストフィールドは `authorizationCode` が必須、`redirectUri` / `codeVerifier` は任意とする。任意フィールドは存在する場合のみ非空・2048 文字以下を検証する。
@@ -41,7 +41,7 @@
 
 ## 登録とログイン
 
-`POST /auth/google` は次の順序で処理する。
+`POST /v1/auth/google` は次の順序で処理する。
 
 1. 認可コードを交換し、ID token を検証する。フローは PKCE / serverAuthCode のどちらでも以降の処理は同一とする。
 2. Google subject で既存ユーザーを特定する。未登録の場合は新規登録する。新規登録時に `user_calendars` へカレンダーは登録しない。
@@ -53,14 +53,14 @@
 
 - アプリ access token は JWT とし、HS256 で署名する。subject は user UUID、既定 TTL は15分とする。
 - アプリ refresh token は 32 バイトのセキュア乱数を Base64url で表現する。平文は保存せず SHA-256 hash を `user_auth_refresh_tokens` に保持する。既定 TTL は30日とする。
-- `POST /auth/refresh` は提示された refresh token の hash で使用可能なトークンを検索し、`revoked_at` を記録して消費したうえで新しい access token と refresh token を発行する。
-- `POST /auth/logout` は refresh token を失効させる。
+- `POST /v1/auth/refresh` は提示された refresh token の hash で使用可能なトークンを検索し、`revoked_at` を記録して消費したうえで新しい access token と refresh token を発行する。
+- `POST /v1/auth/signout` は refresh token を失効させる。
 
 ## エンドポイント
 
 | エンドポイント | メソッド | 認証 | 用途 |
 |---|---|---|---|
-| `/auth/google` | POST | 不要 | 認可コード交換、ユーザー登録/ログイン、セッション発行 |
-| `/auth/refresh` | POST | 不要 | refresh token によるアクセストークン更新 |
-| `/auth/logout` | POST | 不要 | refresh token の失効 |
-| `/auth/me` | GET | JWT 必須 | 現在のユーザー情報取得 |
+| `/v1/auth/google` | POST | 不要 | 認可コード交換、ユーザー登録/ログイン、セッション発行 |
+| `/v1/auth/refresh` | POST | 不要 | refresh token によるアクセストークン更新 |
+| `/v1/auth/signout` | POST | 不要 | refresh token の失効 |
+| `/v1/auth/me` | GET | JWT 必須 | 現在のユーザー情報取得 |

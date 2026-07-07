@@ -32,7 +32,6 @@ import io.kotest.core.spec.style.FunSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
-import io.ktor.client.request.delete
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.patch
@@ -68,26 +67,13 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         .withSubject(userUuid.value.toString())
         .sign(jwtConfig.hmacAlgorithm())
 
-    test("primary省略routeは404になる") {
-        val fake = RecordingGateway()
-        testApplication {
-            application { configureForProxyTest(jwtConfig, fake, userUuid) }
-
-            client.get("/google-calendar/events?timeMin=2026-01-01T00%3A00%3A00Z") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-        }
-
-        fake.requests shouldBe emptyList()
-    }
-
     test("calendar routeは指定calendar/event IDと未解釈bodyを転送する") {
         val fake = RecordingGateway()
         val body = """{"summary":"raw"}"""
         testApplication {
             application { configureForProxyTest(jwtConfig, fake, userUuid) }
 
-            client.patch("/google-calendar/calendars/cal%2Fid/events/event%2Fid") {
+            client.patch("/v1/calendars/cal%2Fid/events/event%2Fid") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody(body)
@@ -99,33 +85,12 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         fake.request?.body?.decodeToString() shouldBe body
     }
 
-    test("primary detail routesは404になる") {
-        val fake = RecordingGateway()
-        testApplication {
-            application { configureForProxyTest(jwtConfig, fake, userUuid) }
-
-            client.get("/google-calendar/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-            client.patch("/google-calendar/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-                header(HttpHeaders.ContentType, "application/json")
-                setBody("{}")
-            }.status shouldBe HttpStatusCode.NotFound
-            client.delete("/google-calendar/events/event-id") {
-                header(HttpHeaders.Authorization, "Bearer ${token()}")
-            }.status shouldBe HttpStatusCode.NotFound
-        }
-
-        fake.requests shouldBe emptyList()
-    }
-
     test("未選択Calendar IDはGoogleへ転送せず403にする") {
         val fake = RecordingGateway()
         testApplication {
             application { configureForProxyTest(jwtConfig, fake, userUuid, selectedCalendarIds = listOf("selected")) }
 
-            client.get("/google-calendar/calendars/unselected/events") {
+            client.get("/v1/calendars/unselected/events") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }.status shouldBe HttpStatusCode.Forbidden
         }
@@ -146,7 +111,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
             testApplication {
                 application { configureForProxyTest(jwtConfig, fake, userUuid) }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                val response = client.get("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }
 
@@ -161,14 +126,14 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
     test("JWTなしは401") {
         testApplication {
             application { configureForProxyTest(jwtConfig, RecordingGateway(), userUuid) }
-            client.get("/google-calendar/calendars/cal%2Fid/events").status shouldBe HttpStatusCode.Unauthorized
+            client.get("/v1/calendars/cal%2Fid/events").status shouldBe HttpStatusCode.Unauthorized
         }
     }
 
     test("allowlist外queryは400") {
         testApplication {
             application { configureForProxyTest(jwtConfig, RecordingGateway(), userUuid) }
-            client.get("/google-calendar/calendars/cal%2Fid/events?sendUpdates=all") {
+            client.get("/v1/calendars/cal%2Fid/events?sendUpdates=all") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
             }.status shouldBe HttpStatusCode.BadRequest
         }
@@ -176,9 +141,9 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
 
     test("空または過大なcalendar IDとevent IDは400") {
         val invalidPaths = listOf(
-            "/google-calendar/calendars/%20/events",
-            "/google-calendar/calendars/${"c".repeat(2049)}/events",
-            "/google-calendar/calendars/cal%2Fid/events/${"e".repeat(2049)}",
+            "/v1/calendars/%20/events",
+            "/v1/calendars/${"c".repeat(2049)}/events",
+            "/v1/calendars/cal%2Fid/events/${"e".repeat(2049)}",
         )
 
         invalidPaths.forEach { path ->
@@ -201,7 +166,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
         invalidQueries.forEach { query ->
             testApplication {
                 application { configureForProxyTest(jwtConfig, RecordingGateway(), userUuid) }
-                client.get("/google-calendar/calendars/cal%2Fid/events?$query") {
+                client.get("/v1/calendars/cal%2Fid/events?$query") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }.status shouldBe HttpStatusCode.BadRequest
             }
@@ -211,20 +176,20 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
     test("POST PATCHはapplication json以外またはContent-Type欠落を400にする") {
         val requests = listOf<suspend (io.ktor.client.HttpClient) -> io.ktor.client.statement.HttpResponse>(
             { client ->
-                client.post("/google-calendar/calendars/cal%2Fid/events") {
+                client.post("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                     setBody(ByteArray(0))
                 }
             },
             { client ->
-                client.post("/google-calendar/calendars/cal%2Fid/events") {
+                client.post("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                     header(HttpHeaders.ContentType, "text/plain")
                     setBody("{}")
                 }
             },
             { client ->
-                client.patch("/google-calendar/calendars/cal%2Fid/events/event") {
+                client.patch("/v1/calendars/cal%2Fid/events/event") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                     header(HttpHeaders.ContentType, "application/xml")
                     setBody("<event/>")
@@ -245,7 +210,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
     test("1MiBを超えるbodyは413") {
         testApplication {
             application { configureForProxyTest(jwtConfig, RecordingGateway(), userUuid) }
-            client.patch("/google-calendar/calendars/cal%2Fid/events/event") {
+            client.patch("/v1/calendars/cal%2Fid/events/event") {
                 header(HttpHeaders.Authorization, "Bearer ${token()}")
                 header(HttpHeaders.ContentType, "application/json")
                 setBody(ByteArray(1024 * 1024 + 1))
@@ -267,7 +232,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
                     )
                 }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                val response = client.get("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }
 
@@ -307,7 +272,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
                     )
                 }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                val response = client.get("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }
 
@@ -327,7 +292,7 @@ class GoogleCalendarProxyRoutingTest : FunSpec({
                     )
                 }
 
-                val response = client.get("/google-calendar/calendars/cal%2Fid/events") {
+                val response = client.get("/v1/calendars/cal%2Fid/events") {
                     header(HttpHeaders.Authorization, "Bearer ${token()}")
                 }
 

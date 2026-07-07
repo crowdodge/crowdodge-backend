@@ -19,7 +19,7 @@ class GoogleCalendarRoutingIntegrationTest : FunSpec({
             }
 
             client.post("/webhooks/google-calendar").status shouldBe HttpStatusCode.BadRequest
-            client.get("/users/me/google-calendars").status shouldBe HttpStatusCode.Unauthorized
+            client.get("/v1/users/me/calendars").status shouldBe HttpStatusCode.Unauthorized
         }
     }
 })

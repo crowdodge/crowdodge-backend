@@ -37,95 +37,97 @@ fun Application.configureUserRouting() {
     val jwtConfig by inject<JwtAppTokenConfig>()
 
     routing {
-        route("/auth") {
-            post("/google") {
-                val request = call.receiveOrProblem<GoogleLoginRequest>() ?: return@post
-                val violations = buildList {
-                    addIfInvalid("authorizationCode", request.authorizationCode)
-                    addIfInvalid("redirectUri", request.redirectUri)
-                    addIfInvalid("codeVerifier", request.codeVerifier)
-                }
-                if (violations.isNotEmpty()) {
-                    return@post call.respondProblem(validationProblem(violations))
-                }
+        route("/v1") {
+            route("/auth") {
+                post("/google") {
+                    val request = call.receiveOrProblem<GoogleLoginRequest>() ?: return@post
+                    val violations = buildList {
+                        addIfInvalid("authorizationCode", request.authorizationCode)
+                        addIfInvalid("redirectUri", request.redirectUri)
+                        addIfInvalid("codeVerifier", request.codeVerifier)
+                    }
+                    if (violations.isNotEmpty()) {
+                        return@post call.respondProblem(validationProblem(violations))
+                    }
 
-                authenticateWithGoogleUseCase.handle(
-                    AuthenticateWithGoogleCommand(
-                        authorizationCode = request.authorizationCode.trim(),
-                        redirectUri = request.redirectUri?.trim(),
-                        codeVerifier = request.codeVerifier?.trim(),
-                    ),
-                ).fold(
-                    ifLeft = { call.respondProblem(it.toProblem()) },
-                    ifRight = { result ->
-                        call.respond(
-                            HttpStatusCode.OK,
-                            TokenResponse(
-                                accessToken = result.accessToken,
-                                refreshToken = result.refreshToken,
-                                expiresIn = jwtConfig.accessTokenTtl.inWholeSeconds,
-                            ),
-                        )
-                    },
-                )
-            }
-
-            post("/refresh") {
-                val request = call.receiveOrProblem<RefreshTokenRequest>() ?: return@post
-                val violations = buildList {
-                    addIfInvalid("refreshToken", request.refreshToken, maxLength = REFRESH_TOKEN_MAX_LENGTH)
-                }
-                if (violations.isNotEmpty()) {
-                    return@post call.respondProblem(validationProblem(violations))
+                    authenticateWithGoogleUseCase.handle(
+                        AuthenticateWithGoogleCommand(
+                            authorizationCode = request.authorizationCode.trim(),
+                            redirectUri = request.redirectUri?.trim(),
+                            codeVerifier = request.codeVerifier?.trim(),
+                        ),
+                    ).fold(
+                        ifLeft = { call.respondProblem(it.toProblem()) },
+                        ifRight = { result ->
+                            call.respond(
+                                HttpStatusCode.OK,
+                                TokenResponse(
+                                    accessToken = result.accessToken,
+                                    refreshToken = result.refreshToken,
+                                    expiresIn = jwtConfig.accessTokenTtl.inWholeSeconds,
+                                ),
+                            )
+                        },
+                    )
                 }
 
-                refreshSessionUseCase.handle(
-                    RefreshSessionCommand(refreshToken = request.refreshToken.trim()),
-                ).fold(
-                    ifLeft = { call.respondProblem(it.toProblem()) },
-                    ifRight = { result ->
-                        call.respond(
-                            HttpStatusCode.OK,
-                            TokenResponse(
-                                accessToken = result.accessToken,
-                                refreshToken = result.refreshToken,
-                                expiresIn = jwtConfig.accessTokenTtl.inWholeSeconds,
-                            ),
-                        )
-                    },
-                )
-            }
+                post("/refresh") {
+                    val request = call.receiveOrProblem<RefreshTokenRequest>() ?: return@post
+                    val violations = buildList {
+                        addIfInvalid("refreshToken", request.refreshToken, maxLength = REFRESH_TOKEN_MAX_LENGTH)
+                    }
+                    if (violations.isNotEmpty()) {
+                        return@post call.respondProblem(validationProblem(violations))
+                    }
 
-            post("/logout") {
-                val request = call.receiveOrProblem<RefreshTokenRequest>() ?: return@post
-                val violations = buildList {
-                    addIfInvalid("refreshToken", request.refreshToken, maxLength = REFRESH_TOKEN_MAX_LENGTH)
+                    refreshSessionUseCase.handle(
+                        RefreshSessionCommand(refreshToken = request.refreshToken.trim()),
+                    ).fold(
+                        ifLeft = { call.respondProblem(it.toProblem()) },
+                        ifRight = { result ->
+                            call.respond(
+                                HttpStatusCode.OK,
+                                TokenResponse(
+                                    accessToken = result.accessToken,
+                                    refreshToken = result.refreshToken,
+                                    expiresIn = jwtConfig.accessTokenTtl.inWholeSeconds,
+                                ),
+                            )
+                        },
+                    )
                 }
-                if (violations.isNotEmpty()) {
-                    return@post call.respondProblem(validationProblem(violations))
+
+                post("/signout") {
+                    val request = call.receiveOrProblem<RefreshTokenRequest>() ?: return@post
+                    val violations = buildList {
+                        addIfInvalid("refreshToken", request.refreshToken, maxLength = REFRESH_TOKEN_MAX_LENGTH)
+                    }
+                    if (violations.isNotEmpty()) {
+                        return@post call.respondProblem(validationProblem(violations))
+                    }
+
+                    logoutUseCase.handle(
+                        LogoutCommand(refreshToken = request.refreshToken.trim()),
+                    ).fold(
+                        ifLeft = { call.respondProblem(it.toProblem()) },
+                        ifRight = { call.respond(HttpStatusCode.NoContent) },
+                    )
                 }
 
-                logoutUseCase.handle(
-                    LogoutCommand(refreshToken = request.refreshToken.trim()),
-                ).fold(
-                    ifLeft = { call.respondProblem(it.toProblem()) },
-                    ifRight = { call.respond(HttpStatusCode.NoContent) },
-                )
-            }
+                authenticate(APP_JWT_AUTH_NAME) {
+                    get("/me") {
+                        val principal = call.principal<AuthenticatedUserPrincipal>()
+                            ?: return@get call.respondProblem(
+                                Problem(
+                                    status = 401,
+                                    code = "UNAUTHORIZED",
+                                    title = "Unauthorized",
+                                    detail = "認証が必要です",
+                                ),
+                            )
 
-            authenticate(APP_JWT_AUTH_NAME) {
-                get("/me") {
-                    val principal = call.principal<AuthenticatedUserPrincipal>()
-                        ?: return@get call.respondProblem(
-                            Problem(
-                                status = 401,
-                                code = "UNAUTHORIZED",
-                                title = "Unauthorized",
-                                detail = "認証が必要です",
-                            ),
-                        )
-
-                    call.respond(CurrentUserResponse(userUuid = principal.userUuid.value.toString()))
+                        call.respond(CurrentUserResponse(userUuid = principal.userUuid.value.toString()))
+                    }
                 }
             }
         }
@@ -180,7 +182,7 @@ private suspend inline fun <reified T : Any> io.ktor.server.application.Applicat
 
 private fun UserError.toProblem(): Problem = when (this) {
     is UserError.ValidationError -> validationProblem(
-        listOf(Problem.Violation(field = name, message = code)),
+        listOf(Problem.Violation(field = name, code = code)),
     )
 
     is UserError.ConflictError -> Problem(
@@ -250,9 +252,9 @@ private fun MutableList<Problem.Violation>.addIfInvalid(
 ) {
     val trimmed = value?.trim() ?: return
     when {
-        trimmed.isEmpty() -> add(Problem.Violation(field = field, message = "MUST_NOT_BE_BLANK"))
+        trimmed.isEmpty() -> add(Problem.Violation(field = field, code = "MUST_NOT_BE_BLANK"))
         trimmed.length > maxLength -> add(
-            Problem.Violation(field = field, message = "MUST_BE_AT_MOST_${maxLength}_CHARS")
+            Problem.Violation(field = field, code = "MUST_BE_AT_MOST_${maxLength}_CHARS")
         )
     }
 }
