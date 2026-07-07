@@ -27,29 +27,31 @@ fun Application.configureGoogleCalendarSelectionRouting() {
     val selections by inject<UserCalendarSelectionService>()
     val coordinator by inject<ReplaceGoogleCalendarSelectionCoordinator>()
     routing {
-        authenticate(APP_JWT_AUTH_NAME) {
-            route("/users/me/google-calendars") {
-                get {
-                    val principal = call.principal<AuthenticatedUserPrincipal>()
-                        ?: return@get call.respondUnauthorized()
-                    selections.listAvailable(principal.userUuid).fold(
-                        ifLeft = { call.respondUserError(it) },
-                        ifRight = {
-                            call.respond(
-                                GoogleCalendarsResponse(it.map { calendar -> calendar.toResponse() }),
-                            )
-                        },
-                    )
-                }
-                put {
-                    val principal = call.principal<AuthenticatedUserPrincipal>()
-                        ?: return@put call.respondUnauthorized()
-                    val request = runCatching { call.receive<ReplaceGoogleCalendarSelectionRequest>() }
-                        .getOrElse { return@put call.respondBadRequest() }
-                    coordinator.execute(principal.userUuid, request.calendarIds).fold(
-                        ifLeft = { call.respondSelectionError(it) },
-                        ifRight = { call.respondText("", status = HttpStatusCode.NoContent) },
-                    )
+        route("/v1") {
+            authenticate(APP_JWT_AUTH_NAME) {
+                route("/users/me/calendars") {
+                    get {
+                        val principal = call.principal<AuthenticatedUserPrincipal>()
+                            ?: return@get call.respondUnauthorized()
+                        selections.listAvailable(principal.userUuid).fold(
+                            ifLeft = { call.respondUserError(it) },
+                            ifRight = {
+                                call.respond(
+                                    GoogleCalendarsResponse(it.map { calendar -> calendar.toResponse() }),
+                                )
+                            },
+                        )
+                    }
+                    put {
+                        val principal = call.principal<AuthenticatedUserPrincipal>()
+                            ?: return@put call.respondUnauthorized()
+                        val request = runCatching { call.receive<ReplaceGoogleCalendarSelectionRequest>() }
+                            .getOrElse { return@put call.respondBadRequest() }
+                        coordinator.execute(principal.userUuid, request.calendarIds).fold(
+                            ifLeft = { call.respondSelectionError(it) },
+                            ifRight = { call.respondText("", status = HttpStatusCode.NoContent) },
+                        )
+                    }
                 }
             }
         }

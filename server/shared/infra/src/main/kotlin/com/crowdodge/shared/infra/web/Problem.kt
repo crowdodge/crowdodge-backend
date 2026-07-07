@@ -42,7 +42,7 @@ data class Problem(
     }
 
     @Serializable
-    data class Violation(val field: String, val message: String)
+    data class Violation(val field: String, val code: String)
 }
 
 /**
