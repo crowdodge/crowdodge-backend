@@ -22,6 +22,7 @@ dependencies {
     implementation(projects.contexts.destination)
     implementation(projects.contexts.congestion)
     implementation(projects.contexts.notification)
+    implementation(projects.readmodel)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)
@@ -35,6 +36,7 @@ dependencies {
     implementation(libs.ktor.server.call.id)
     implementation(libs.ktor.client.cio)
     implementation(libs.java.jwt)
+    implementation(libs.firebase.admin)
 
     // DI
     implementation(libs.koin.ktor)
@@ -86,4 +88,11 @@ tasks.register<JavaExec>("renewGoogleCalendarWatches") {
     description = "Google Calendar watchの整合・更新を1回実行する"
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = "com.crowdodge.app.calendar.GoogleCalendarWatchRenewalMainKt"
+}
+
+tasks.register<JavaExec>("dispatchNotifications") {
+    group = "application"
+    description = "期限到来した通知スケジュールの FCM 送信を1回実行する"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.crowdodge.app.notification.NotificationDispatchMainKt"
 }

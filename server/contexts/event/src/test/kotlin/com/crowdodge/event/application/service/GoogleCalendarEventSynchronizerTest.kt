@@ -15,9 +15,10 @@ import com.crowdodge.event.application.port.GoogleCalendarEventsGateway
 import com.crowdodge.event.application.port.IncomingCalendarEvent
 import com.crowdodge.event.domain.error.EventError
 import com.crowdodge.event.domain.event.EventCancelled
-import com.crowdodge.event.domain.event.EventRemindTimingChanged
+import com.crowdodge.event.domain.event.EventNotificationTimingChanged
 import com.crowdodge.event.domain.event.EventRescheduled
 import com.crowdodge.event.domain.event.EventScheduled
+import com.crowdodge.event.domain.event.NotificationTimingChangeReason
 import com.crowdodge.event.domain.model.Event
 import com.crowdodge.event.domain.model.EventContent
 import com.crowdodge.event.domain.model.EventUuid
@@ -77,7 +78,7 @@ class GoogleCalendarEventSynchronizerTest : FunSpec({
         gateway.incrementalCalls.map { it.syncToken } shouldContainExactly listOf("sync-token")
     }
 
-    test("予定日時変更は EventRescheduled と EventRemindTimingChanged を単一 EventUuid 対象で発行する") {
+    test("予定日時とリマインド時刻の変更は変更理由付き通知イベントを発行する") {
         val calendarUuid = UserCalendarUuid(Uuid.random())
         val eventUuid = EventUuid.new()
         val googleEventId = gid("changed-event")
@@ -120,9 +121,11 @@ class GoogleCalendarEventSynchronizerTest : FunSpec({
         repository.upserted.map { it.eventUuid } shouldContainExactly listOf(eventUuid)
         publisher.published.map { it::class }.shouldContainExactlyInAnyOrder(
             EventRescheduled::class,
-            EventRemindTimingChanged::class,
+            EventNotificationTimingChanged::class,
         )
         publisher.published.map { it.targetEventUuid() }.shouldContainExactlyInAnyOrder(eventUuid, eventUuid)
+        publisher.published.filterIsInstance<EventNotificationTimingChanged>().single().reason shouldBe
+            NotificationTimingChangeReason.ScheduleAndRemindTimingChanged
     }
 
     test("Google 側削除は保存予定を削除し EventCancelled を発行する") {
@@ -600,7 +603,7 @@ private fun DomainEvent.targetEventUuid(): EventUuid =
     when (this) {
         is EventScheduled -> eventUuid
         is EventRescheduled -> eventUuid
-        is EventRemindTimingChanged -> eventUuid
+        is EventNotificationTimingChanged -> eventUuid
         is EventCancelled -> eventUuid
         else -> error("unexpected domain event: $this")
     }

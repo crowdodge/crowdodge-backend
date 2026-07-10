@@ -26,8 +26,13 @@ server/
 │   ├── destination/
 │   ├── congestion/
 │   └── notification/
+├── readmodel/
 └── konsist/
 ```
+
+## readmodel モジュール
+
+- BC 横断の読み取り専用クエリ（read model）。contexts の Table 定義を import して SELECT のみ行う。
 
 ## 各コンテキストの内部構成
 
@@ -44,7 +49,6 @@ contexts/<context>/
 ## 現行の注意点
 
 - `contexts/destination` の現行パッケージ名は `com.crowdodge.distination`。
-- `contexts/notification` の現行パッケージ名は `com.crowdodge.infrastrcuture.persistence`。
 - 上記は現行コードの状態であり、修正する場合はコードとドキュメントを同時に更新する。
 
 ## shared モジュール

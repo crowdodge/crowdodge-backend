@@ -21,6 +21,7 @@ kotest = "6.1.11"
 konsist = "0.17.3"
 detekt = "1.23.8"
 javaJwt = "4.5.0"
+firebaseAdmin = "9.10.0"
 
 [libraries]
 # Arrow（エラーハンドリング §10）
@@ -83,6 +84,8 @@ junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "jun
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junit" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 java-jwt = { module = "com.auth0:java-jwt", version.ref = "javaJwt" }
+# FCM 送信（notification BC infrastructure §12）
+firebase-admin = { module = "com.google.firebase:firebase-admin", version.ref = "firebaseAdmin" }
 testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "testcontainers" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter", version.ref = "testcontainers" }
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }

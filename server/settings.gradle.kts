@@ -22,6 +22,7 @@ include(
     ":shared:kernel",
     ":shared:infra",
     ":konsist",
+    ":readmodel",
     ":contexts:user",
     ":contexts:event",
     ":contexts:destination",
