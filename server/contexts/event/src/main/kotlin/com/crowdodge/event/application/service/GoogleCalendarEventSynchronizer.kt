@@ -11,9 +11,10 @@ import com.crowdodge.event.application.port.GoogleCalendarEventsGateway
 import com.crowdodge.event.application.port.IncomingCalendarEvent
 import com.crowdodge.event.domain.error.EventError
 import com.crowdodge.event.domain.event.EventCancelled
-import com.crowdodge.event.domain.event.EventRemindTimingChanged
+import com.crowdodge.event.domain.event.EventNotificationTimingChanged
 import com.crowdodge.event.domain.event.EventRescheduled
 import com.crowdodge.event.domain.event.EventScheduled
+import com.crowdodge.event.domain.event.NotificationTimingChangeReason
 import com.crowdodge.event.domain.model.Event
 import com.crowdodge.event.domain.model.GoogleEventId
 import com.crowdodge.event.domain.model.UserCalendarUuid
@@ -212,7 +213,16 @@ class GoogleCalendarEventSynchronizer(
 
             if (predictionChanged) emitted += EventRescheduled(prior.eventUuid, occurredAt)
             if (remindChanged || scheduleChanged) {
-                emitted += EventRemindTimingChanged(prior.eventUuid, occurredAt)
+                emitted += EventNotificationTimingChanged(
+                    eventUuid = prior.eventUuid,
+                    reason = when {
+                        scheduleChanged && remindChanged ->
+                            NotificationTimingChangeReason.ScheduleAndRemindTimingChanged
+                        scheduleChanged -> NotificationTimingChangeReason.ScheduleChanged
+                        else -> NotificationTimingChangeReason.RemindTimingChanged
+                    },
+                    occurredAt = occurredAt,
+                )
             }
         }
 

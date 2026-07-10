@@ -3,6 +3,7 @@ package com.crowdodge.app.di
 import com.crowdodge.app.calendar.CalendarInitialSyncRequestedHandler
 import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
 import com.crowdodge.app.calendar.ReplaceGoogleCalendarSelectionCoordinator
+import com.crowdodge.app.notification.EventNotificationScheduleHandler
 import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleService
 import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
 import com.crowdodge.shared.kernel.DomainEventHandler
@@ -11,6 +12,7 @@ import com.crowdodge.shared.kernel.TransactionRunner
 import com.crowdodge.user.application.query.ProxyGoogleCalendarUseCase
 import com.crowdodge.user.application.service.UserCalendarSelectionService
 import io.kotest.core.spec.style.FunSpec
+import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.engine.applicationEnvironment
@@ -33,8 +35,10 @@ class AppModuleTest : FunSpec({
             val koin = koinApplication.koin
             koin.get<DomainEventPublisher>()
                 .shouldBeInstanceOf<TransactionalInProcessDomainEventPublisher>()
-            koin.getAll<DomainEventHandler>().single()
-                .shouldBeInstanceOf<CalendarInitialSyncRequestedHandler>()
+            val handlers = koin.getAll<DomainEventHandler>()
+            handlers.size shouldBe 2
+            handlers.any { it is CalendarInitialSyncRequestedHandler } shouldBe true
+            handlers.any { it is EventNotificationScheduleHandler } shouldBe true
             koin.get<UserCalendarSelectionService>()
                 .shouldBeInstanceOf<UserCalendarSelectionService>()
             koin.get<GoogleCalendarSyncLifecycleService>()
