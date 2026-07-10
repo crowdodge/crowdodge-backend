@@ -8,11 +8,6 @@
 
 ユーザー単位の設定を保持する。
 
-## 状態
-
-- Exposed定義あり。
-- `V2__user.sql` でマイグレーション反映済み。
-
 ## 列
 
 | 列 | 型 | 制約 | 説明 |
@@ -22,8 +17,3 @@
 | `remind_timing` | `bigint` | NOT NULL | 既定リマインド間隔。ナノ秒 |
 | `created_at` | `timestamptz` | NOT NULL | 作成日時 |
 | `updated_at` | `timestamptz` | NOT NULL | 更新日時 |
-
-## 検証
-
-- `RemindTiming` VO は正の値のみ許可する。
-- 現行DB定義には `remind_timing > 0` の CHECK 制約はない。

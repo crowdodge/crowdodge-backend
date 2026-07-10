@@ -2,8 +2,7 @@
 
 ## 更新対象
 
-- パッケージ構成、依存方向、レイヤー責務を変更した場合に更新する。
-- 自動検査を変更した場合は [テスト方針](testing.md) も更新する。
+- パッケージ構成、依存方向、レイヤー責務、`appModule` の配線を変更した場合に更新する。
 
 ## レイヤー
 
@@ -36,8 +35,8 @@ presentation   infrastructure
 - コンテキスト間連携は公開ドメインイベントまたは公開ポートで行う。
 - `readmodel` モジュールは BC 横断の読み取り専用クエリを提供する。contexts の `infrastructure.persistence` の Table 定義と application の公開ポートのみ import でき、書き込みは行わない。contexts は readmodel に依存しない。
 
-## 現行実装
+## 配線
 
-- `infrastructure` の実装済み範囲は R2DBC、Exposed テーブル、DBリポジトリ、readiness probe、Domain Event配送が中心。
-- Google OAuth、Google Calendar、FCMの外部APIクライアントは実装済み。
-- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe`、`DomainEventPublisher`、BC間ACLを配線している。
+- `appModule` は DB接続、`TransactionRunner`、`ReadinessProbe`、`DomainEventPublisher`、BC間ACLを配線する。
+- `application` は `DomainEventPublisher` ポートだけに依存する。
+- `DomainEventPublisher` の実装は `infrastructure` に置く。
