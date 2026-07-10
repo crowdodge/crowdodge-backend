@@ -16,17 +16,13 @@
 
 ## 通知ジョブ
 
-- 通知ジョブは未実装。
-- `notification_schedules` の Exposed 定義は存在するが、マイグレーションには未反映。
-- 通知キューは `notificate_time` が到来した `pending` 行を対象にする。
-- 実行時は対象行を `processing` に確保する。
-- FCM 送信成功時は `completed` に更新する。
-- FCM 送信失敗時は `failed` に更新する。
-- 予定削除などで不要になった通知は `canceled` に更新する。
-- 現行の Exposed 定義とマイグレーションには `notificate_time` 列がなく、実装漏れとして扱う。
-- 取得ロック、リトライ、失効処理は未実装。
+- `notification_schedules` の `notificate_time` が到来した `pending` 行を対象にする。
+- 実行時は対象行を `processing` に確保する（Job は同時実行 1 のため行ロック排他はしない）。
+- FCM 送信成功時は `completed`、失敗時は `failed` に更新する。リトライはしない。
+- 予定削除などで不要になった通知、および混雑情報が取得できない `CongestionAlert` は `canceled` に更新する。
+- 実行の詳細は [通知送信ジョブ](notification-dispatch.md) を参照する。
 
 ## スケジューラ
 
-- スケジューラ方式は未決とする。
-- 候補は DBポーリング、Quartz、外部ジョブ基盤とする。
+- Cloud Scheduler が 5 分間隔で Cloud Run Job（`NotificationDispatchMain`）を起動する。
+- 通知は最大約 5 分遅延する。

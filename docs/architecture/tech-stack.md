@@ -23,7 +23,7 @@
 | テストダブル | MockK 1.14.11 | Version Catalog 定義のみ |
 | JSON | kotlinx.serialization 1.11.0 | 導入済み |
 | HTTP クライアント | Ktor Client | 導入済み |
-| 通知 | Firebase Cloud Messaging | 未導入 |
+| 通知 | Firebase Cloud Messaging | Firebase Admin SDK で導入済み |
 | 課金 | RevenueCat | 未導入 |
 | ログ | Logback 1.5.34 / slf4j | 導入済み |
 | 認証 | Google OAuth2 + アプリJWT/refresh token | 導入済み |

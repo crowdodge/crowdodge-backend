@@ -7,6 +7,7 @@ COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY app ./app
 COPY shared ./shared
 COPY contexts ./contexts
+COPY readmodel ./readmodel
 COPY konsist ./konsist
 
 RUN ./gradlew :app:installDist --no-daemon
