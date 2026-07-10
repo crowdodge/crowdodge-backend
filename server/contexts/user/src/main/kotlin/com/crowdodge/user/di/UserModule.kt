@@ -3,6 +3,7 @@ package com.crowdodge.user.di
 import com.crowdodge.user.application.command.AuthenticateWithGoogleUseCase
 import com.crowdodge.user.application.command.LogoutUseCase
 import com.crowdodge.user.application.command.RefreshSessionUseCase
+import com.crowdodge.user.application.command.RegisterUserDeviceUseCase
 import com.crowdodge.user.application.port.AppTokenPort
 import com.crowdodge.user.application.port.GoogleCalendarCredentialStore
 import com.crowdodge.user.application.port.GoogleCalendarListGateway
@@ -55,6 +56,7 @@ fun userModule(googleCalendarApiBaseUrl: String) = module {
     single<AppTokenPort> { get<JwtAppTokenAdapter>() }
     single { AuthenticateWithGoogleUseCase(get(), get(), get(), get(), get(), get(), get()) }
     single { ResolveGoogleCalendarConnectionUseCase(get(), get(), get()) }
+    single { RegisterUserDeviceUseCase(get(), get()) }
     single { UserCalendarSelectionService(get(), get(), get(), get(), get()) }
     single { ProxyGoogleCalendarUseCase(get(), get(), get(), get(), get()) }
     single { RefreshSessionUseCase(get(), get(), get()) }

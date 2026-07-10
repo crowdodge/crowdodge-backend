@@ -29,6 +29,7 @@ fun Application.module() {
     configureRouting()
     configureEventRouting()
     configureUserRouting()
+    configureApplicationRouting()
     configureGoogleCalendarSelectionRouting()
     configureGoogleCalendarProxyRouting()
 }
