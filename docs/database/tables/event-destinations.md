@@ -2,18 +2,11 @@
 
 ## 更新対象
 
-- 目的地グループ、ルート情報、シリーズ共有ルールを変更した場合に更新する。
+- 目的地グループ、ルート情報、テーブル制約を変更した場合に更新する。
 
 ## 責務
 
 予定の目的地とルート情報を保持する。
-
-## 状態
-
-- Exposed定義のみ存在する。
-- マイグレーション未反映。
-- `GenerateMigrationMain` の対象からコメントアウトされている。
-- ドメインモデル、リポジトリ、ユースケースは未実装。
 
 ## 列
 
@@ -27,8 +20,3 @@
 | `route_information` | `jsonb` | NOT NULL | ルート情報 |
 | `created_at` | `timestamptz` | NOT NULL | 作成日時 |
 | `updated_at` | `timestamptz` | NOT NULL | 更新日時 |
-
-## 制約
-
-- 同一 `recurring_event_id` の予定は同じ目的地グループを共有する。
-- 単発予定は `recurring_event_id` を NULL にする。

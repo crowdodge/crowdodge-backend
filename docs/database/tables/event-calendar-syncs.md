@@ -3,17 +3,10 @@
 ## 更新対象
 
 - Google カレンダー同期状態、watch チャンネル、ローリング窓を変更した場合に更新する。
-- 同期手順は [Google カレンダー同期](../../integrations/google-calendar-sync.md) を参照する。
 
 ## 責務
 
 Google カレンダー取り込みの同期状態と watch 状態を保持する。
-
-## 状態
-
-- Exposed定義あり。
-- `V3__change.sql` でマイグレーション反映済み。
-- watch登録と期限前更新ジョブは実装済み。
 
 ## 列
 

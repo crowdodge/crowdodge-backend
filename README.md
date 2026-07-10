@@ -114,6 +114,6 @@ GET /ready    ->  200 {"status":"READY"}                              # readines
 
 `/ready` は R2DBC で `SELECT 1` を実行して DB 到達性を確認する（R2DBC は遅延接続のため、ここで初めて実接続を張る）。
 
-## ロードマップ
+## 進捗管理
 
-実装順序と現行の実装状況は [`docs/operations/roadmap.md`](docs/operations/roadmap.md) に従う。
+実装の進捗と未決事項は GitHub Issues を正とする。

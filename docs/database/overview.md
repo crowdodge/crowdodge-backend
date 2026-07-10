@@ -30,18 +30,8 @@
 
 - 一時点は `timestamptz` を使う。
 - 業務日付は `date` を使う。
-- Kotlin の `Duration` は Exposed の `duration` 型で扱う。現行マイグレーションでは `BIGINT` として生成される。
-- 現行のマイグレーション反映済みテーブルは、一時点を `timestamptz` で保持する。
-- Exposed定義のみの `event_destination_links.created_at`、`event_congestions.congestion_start_time`、`event_congestions.congestion_end_time` は現行コード上 `timestamp` 型で定義されている。
 
 ## テーブル仕様
 
-- [テーブル一覧](tables/README.md) を参照する。
-
-## マイグレーション反映状況
-
-- `V1__baseline.sql` は PostGIS 拡張のみを作成する。
-- `V2__user.sql` は user 系テーブルを作成する。
-- `V3__change.sql` は `events` と `event_calendar_syncs` を作成する。
-- `GenerateMigrationMain` の対象は現状 user 系テーブル、`events`、`event_calendar_syncs` のみ。
-- destination、congestion、notification のテーブルは Exposed 定義のみ存在し、マイグレーション生成対象からコメントアウトされている。
+- テーブルごとの仕様は `tables/` 配下の同名ファイル（snake_case を kebab-case にしたファイル名）に置く。
+- テーブルを追加した場合は `tables/` に仕様ファイルを追加する。

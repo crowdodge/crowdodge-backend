@@ -2,8 +2,7 @@
 
 ## 更新対象
 
-- Gradle モジュールを追加、削除、移動した場合に更新する。
-- 依存方向を変更する場合は [レイヤーと依存ルール](layers.md) も更新する。
+- Gradle モジュール、モジュールの責務、依存方向、ルート構成、コンテキスト内パッケージ構成を追加、削除、移動、変更した場合に更新する。
 
 ## 方針
 
@@ -32,7 +31,7 @@ server/
 
 ## readmodel モジュール
 
-- BC 横断の読み取り専用クエリ（read model）。contexts の Table 定義を import して SELECT のみ行う。
+- BC横断の読み取り専用クエリを提供する。
 
 ## 各コンテキストの内部構成
 
@@ -45,11 +44,6 @@ contexts/<context>/
     ├── infrastructure/
     └── di/
 ```
-
-## 現行の注意点
-
-- `contexts/destination` の現行パッケージ名は `com.crowdodge.distination`。
-- 上記は現行コードの状態であり、修正する場合はコードとドキュメントを同時に更新する。
 
 ## shared モジュール
 

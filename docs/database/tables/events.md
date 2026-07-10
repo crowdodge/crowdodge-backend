@@ -3,17 +3,10 @@
 ## 更新対象
 
 - Google カレンダー投影、予定時刻、リマインド間隔、同期キーを変更した場合に更新する。
-- Google 同期仕様は [Google カレンダー同期](../../integrations/google-calendar-sync.md) を参照する。
 
 ## 責務
 
 Google カレンダーから取得した予定インスタンスを、サーバ処理用の投影として保持する。
-
-## 状態
-
-- Exposed定義あり。
-- `V3__change.sql` でマイグレーション反映済み。
-- Google Calendar APIからの初回同期と差分同期は実装済み。
 
 ## 列
 
@@ -40,7 +33,6 @@ Google カレンダーから取得した予定インスタンスを、サーバ�
 - `UNIQUE(user_calendar_uuid, google_event_id)`。
 - `title`、`description`、`location` は Google が省略し得るため NULL を許可する。
 - `remind_timing` が NULL の場合は `user_settings.remind_timing` を使う。
-- `RemindTiming` VO は正の値のみ許可する。現行DB定義には `remind_timing > 0` の CHECK 制約はない。
 - 時刻指定予定は `start_time` / `end_time` を使う。
 - 終日予定は `start_date` / `end_date` を使う。
 - 時刻指定予定と終日予定の列が混在した行は永続データ破損として扱う。

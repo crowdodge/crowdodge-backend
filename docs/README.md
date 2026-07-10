@@ -4,46 +4,16 @@
 
 ## 更新ルール
 
-- 仕様を変更した場合は、変更対象の実装と同じ単位のドキュメントを更新する。
-- 複数領域に影響する変更は、この README の参照先を起点に関連ファイルを確認する。
+- 仕様を変更した場合は、変更した実装に対応するドキュメントを更新する。
 - 背景説明、検討過程、感想は記載しない。決定済みの仕様、制約、ルールのみを書く。
-- テーブルを追加・変更した場合は、`database/tables/` の該当ファイルを更新する。
-- 外部API連携を変更した場合は、`integrations/` の該当ファイルを更新する。
+- 実装の進捗・状況は記載しない。実装状況の正はコードと GitHub issues とする。
+- 1つの事実は1ファイルだけを正本とする。他のファイルに同じ事実を重複させない。
 
-## ドキュメント一覧
+## ディレクトリ構成
 
-### アーキテクチャ
-
-- [技術スタック](architecture/tech-stack.md)
-- [モジュール構成](architecture/modules.md)
-- [レイヤーと依存ルール](architecture/layers.md)
-- [エラーハンドリング](architecture/error-handling.md)
-- [トランザクション管理](architecture/transactions.md)
-- [永続化方針](architecture/persistence.md)
-- [テスト方針](architecture/testing.md)
-
-### ドメイン
-
-- [ユビキタス言語](domain/ubiquitous-language.md)
-- [境界づけられたコンテキスト](domain/bounded-contexts.md)
-- [コンテキスト間連携](domain/context-map.md)
-
-### 外部連携
-
-- [Google認証とアプリセッション](integrations/google-auth.md)
-- [Google カレンダー同期](integrations/google-calendar-sync.md)
-- [Calendar Events API プロキシ](integrations/google-calendar-proxy.md)
-- [外部サービス](integrations/external-services.md)
-
-### 運用・非同期処理
-
-- [非同期処理と通知ジョブ](operations/async-processing.md)
-- [Google Calendar Watch Renewal Job](operations/google-calendar-watch-renewal.md)
-- [モバイル OAuth セットアップ](operations/mobile-oauth-setup.md)
-- [実装ロードマップ](operations/roadmap.md)
-- [未決事項](operations/open-issues.md)
-
-### データベース
-
-- [DB共通ルール](database/overview.md)
-- [テーブル一覧](database/tables/README.md)
+| ディレクトリ | 内容 |
+|---|---|
+| [architecture/](architecture/) | 横断的な設計規約 |
+| [domain/](domain/) | ドメイン仕様 |
+| [server-operations/](server-operations/) | サーバー運用仕様 |
+| [database/](database/) | DB仕様 |
