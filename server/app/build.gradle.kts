@@ -22,6 +22,7 @@ dependencies {
     implementation(projects.contexts.destination)
     implementation(projects.contexts.congestion)
     implementation(projects.contexts.notification)
+    implementation(projects.readmodel)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)

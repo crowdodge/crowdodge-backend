@@ -11,10 +11,8 @@
 
 ## 状態
 
-- Exposed定義のみ存在する。
-- マイグレーション未反映。
-- `GenerateMigrationMain` の対象からコメントアウトされている。
-- ドメインモデル、リポジトリ、ユースケースは未実装。
+- Exposed 定義・マイグレーション（`V5__change.sql`）反映済み。
+- `GenerateMigrationMain` の対象に登録済み。
 
 ## 列
 
@@ -33,8 +31,3 @@
 
 - `kind`: `Reminder` / `CongestionAlert`。
 - `status`: `pending` / `processing` / `completed` / `failed` / `canceled`。
-
-## 注意
-
-- `notificate_time` は確定仕様。
-- 現行の Exposed 定義とマイグレーションには `notificate_time` 列がなく、実装漏れとして扱う。

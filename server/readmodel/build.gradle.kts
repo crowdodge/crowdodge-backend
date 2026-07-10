@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -8,25 +7,22 @@ kotlin {
 }
 
 dependencies {
-    // presentation/application/domain → shared:kernel（§4 の依存ルール）。
-    // infrastructure 着手時に shared:infra / ktor / exposed を追加する。
+    // BC 横断の読み取り専用クエリ。contexts の Table 定義を import して SELECT のみ行う。
     implementation(projects.shared.kernel)
     implementation(projects.shared.infra)
-    implementation(libs.arrow.core)
+    // notification の公開ポートを実装する。
+    implementation(projects.contexts.notification)
+    // 他 BC の Table 定義を import するための依存（読み取り専用）。
+    implementation(projects.contexts.event)
+    implementation(projects.contexts.user)
     implementation(libs.exposed.core)
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.exposed.r2dbc)
-    implementation(libs.firebase.admin)
-    implementation(libs.koin.core)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.datetime)
 
-    // presentation 層の DTO は kotlinx.serialization（§1）。
-    implementation(libs.kotlinx.serialization.json)
-
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
-    testImplementation(libs.kotest.assertions.arrow)
     testImplementation(libs.kotest.extensions.testcontainers)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.postgresql)
