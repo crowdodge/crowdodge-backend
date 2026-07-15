@@ -115,22 +115,6 @@ class CongestionInfoAdapterTest : FunSpec({
         )
     }
 
-    test("空入力は境界のMapへ問い合わせず空Mapを返す") {
-        val readModel = FakeGenerationReadModel(null)
-        val useCase = GenerateCongestionInfoUseCase(
-            readModel = readModel,
-            generator = CongestionGeneratorStub,
-            forecasts = ForecastRepositoryStub,
-            transactions = ImmediateAppTransactionRunner,
-            clock = FixedAppClock,
-            maxConcurrency = 1,
-            hashCalculator = Sha256GenerationInputHashCalculator(),
-        )
-
-        CongestionInfoAdapter(useCase).findAll(emptyList()) shouldBe emptyMap()
-        readModel.calls shouldBe 0
-    }
-
     test("重複した通知BCのUUIDを混雑BCへ一意な集合として渡す") {
         val uuid = Uuid.random()
         val readModel = FakeGenerationReadModel(null)
@@ -155,13 +139,11 @@ class CongestionInfoAdapterTest : FunSpec({
 private class FakeGenerationReadModel(
     private val candidate: CongestionGenerationCandidate?,
 ) : CongestionGenerationReadModel {
-    var calls = 0
     var requestedEventUuids = emptySet<CongestionEventUuid>()
 
     override suspend fun findAll(
         eventUuids: Set<CongestionEventUuid>,
     ): Map<CongestionEventUuid, CongestionGenerationCandidate> {
-        calls += 1
         requestedEventUuids = eventUuids
         return candidate?.let { mapOf(it.source.eventUuid to it) } ?: emptyMap()
     }

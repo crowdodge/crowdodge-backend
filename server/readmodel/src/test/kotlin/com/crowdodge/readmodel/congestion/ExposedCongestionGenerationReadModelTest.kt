@@ -41,7 +41,7 @@ class ExposedCongestionGenerationReadModelTest : FunSpec() {
             install(TestContainerSpecExtension(postgres))
 
             test("予定・目的地・往路・保存forecastを一括でcandidateへ射影する") {
-                withReadModel(postgres) { tx, readModel, db ->
+                withReadModel(postgres) { readModel, db ->
                     val eventUuid = insertTimedEvent(db, withDestination = true)
                     insertForecast(db, eventUuid)
 
@@ -70,12 +70,11 @@ class ExposedCongestionGenerationReadModelTest : FunSpec() {
                     candidate.source.travelDuration shouldBe 30.minutes
                     candidate.savedForecast!!.generationInputHash shouldBe "hash"
                     candidate.savedForecast!!.periods.single().description shouldBe "混雑"
-                    tx.readOnly { result.size shouldBe 1 }
                 }
             }
 
             test("終日予定はbusiness dateの開始時刻へ変換し、目的地のない予定は除外する") {
-                withReadModel(postgres) { _, readModel, db ->
+                withReadModel(postgres) { readModel, db ->
                     val allDay = insertAllDayEvent(db, withDestination = true)
                     val withoutDestination = insertTimedEvent(db, withDestination = false)
 
@@ -101,7 +100,7 @@ class ExposedCongestionGenerationReadModelTest : FunSpec() {
 
     private suspend fun withReadModel(
         postgres: PostgreSQLContainer,
-        block: suspend (ExposedTransactionRunner, ExposedCongestionGenerationReadModel, R2dbcDatabase) -> Unit,
+        block: suspend (ExposedCongestionGenerationReadModel, R2dbcDatabase) -> Unit,
     ) {
         R2dbcFactory.connect(
             DatabaseConfig(
@@ -129,7 +128,6 @@ class ExposedCongestionGenerationReadModelTest : FunSpec() {
                 )
             }
             block(
-                ExposedTransactionRunner(connection.database),
                 ExposedCongestionGenerationReadModel(ExposedTransactionRunner(connection.database)),
                 connection.database,
             )

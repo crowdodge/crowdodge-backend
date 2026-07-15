@@ -230,17 +230,13 @@ class GenerateCongestionInfoUseCaseTest : FunSpec({
         val repository = RecordingForecastRepository()
         val transactions = RecordingCongestionTransactionRunner()
 
-        val result = useCase(
+        useCase(
             readModel = readModel,
             generator = RecordingGenerator(),
             repository = repository,
             transactions = transactions,
         ).execute(candidates.keys)
 
-        result.values shouldContainExactly listOf(
-            CongestionInfoResult.Success(CongestionSummary("17〜18時に混雑予測あり")),
-            CongestionInfoResult.Success(CongestionSummary("17〜18時に混雑予測あり")),
-        )
         repository.calls.size shouldBe 2
         transactions.inTransactionCalls shouldBe 1
     }

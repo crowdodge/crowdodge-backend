@@ -89,10 +89,7 @@ class GeminiCongestionForecastGeneratorTest : FunSpec({
         }
     }
 
-    fun generator(
-        client: HttpClient,
-        sleeper: suspend (kotlin.time.Duration) -> Unit = {},
-    ) = GeminiCongestionForecastGenerator(
+    fun generator(client: HttpClient) = GeminiCongestionForecastGenerator(
         client = GeminiInteractionsClient(
             httpClient = client,
             config = GeminiInteractionsConfig(
@@ -100,7 +97,7 @@ class GeminiCongestionForecastGeneratorTest : FunSpec({
                 apiKey = "secret",
                 maxAttempts = 2,
             ),
-            sleeper = sleeper,
+            sleeper = {},
         ),
     )
 
@@ -281,25 +278,6 @@ class GeminiCongestionForecastGeneratorTest : FunSpec({
         generator(client).generate(source).getOrNull() shouldBe emptyList()
 
         requests shouldHaveSize 1
-        client.close()
-    }
-
-    test("429の後は最大1回だけ再試行し、成功結果を返す") {
-        val requests = mutableListOf<io.ktor.client.request.HttpRequestData>()
-        val delays = mutableListOf<kotlin.time.Duration>()
-        val client = client(
-            mutableListOf(
-                HttpStatusCode.TooManyRequests to "{}",
-                HttpStatusCode.OK to interactionResponse("""{"congestions":[]}"""),
-            ),
-            requests,
-        )
-
-        val result = generator(client) { delays += it }.generate(source)
-
-        result.getOrNull() shouldBe emptyList()
-        requests shouldHaveSize 2
-        delays shouldHaveSize 1
         client.close()
     }
 

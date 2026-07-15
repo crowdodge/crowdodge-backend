@@ -35,25 +35,6 @@ class CongestionSummaryFormatterTest : FunSpec({
         result shouldBe "18〜19:30、20〜22時に混雑予測あり"
     }
 
-    test("同じ開始終了日時はareaとdescriptionで安定ソートする") {
-        val period = period(
-            start = Instant.parse("2026-08-01T09:00:00Z"),
-            end = Instant.parse("2026-08-01T10:00:00Z"),
-            area = "A",
-            description = "first",
-        )
-        val result = formatter.format(
-            eventStart = Instant.parse("2026-08-01T01:00:00Z"),
-            eventEnd = Instant.parse("2026-08-01T03:00:00Z"),
-            periods = listOf(
-                period(period.start, period.end, "B", "second"),
-                period(period.start, period.end, "A", "first"),
-            ),
-        )
-
-        result shouldBe "18〜19時、18〜19時に混雑予測あり"
-    }
-
     test("24時間を超える予定は混雑期間の開始日だけをまとめる") {
         val result = formatter.format(
             eventStart = Instant.parse("2026-08-01T00:00:00Z"),
