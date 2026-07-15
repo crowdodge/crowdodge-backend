@@ -35,6 +35,7 @@ import org.koin.dsl.module
 import org.koin.dsl.onClose
 import kotlin.time.Clock
 
+/** Notification dispatch Job に必要な依存関係を構成する。 */
 fun notificationDispatchModule(environment: ApplicationEnvironment): Module {
     val databaseConfig = environment.databaseConfig()
     val geminiConfig = environment.geminiInteractionsConfig()

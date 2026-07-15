@@ -54,6 +54,7 @@ private const val MIGRATION_DIR = "src/main/resources/db/migration"
 
 // tables は静的な小配列で、Exposed のマイグレーション API が vararg のみを受けるため
 // spread は不可避。コピーのコストも無視できるため SpreadOperator を抑制する。
+/** 現在のDBスキーマとの差分から次のFlywayマイグレーションを生成する。 */
 @Suppress("SpreadOperator")
 @OptIn(org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi::class)
 fun main() {

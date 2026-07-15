@@ -10,6 +10,7 @@ import kotlinx.datetime.toLocalDateTime
 object NotificationMessageFactory {
     private const val DEFAULT_TITLE = "予定のお知らせ"
 
+    /** 予定と任意の混雑情報からPush通知を作成する。 */
     fun create(source: EventDispatchSource, congestion: CongestionInfo?): PushNotification {
         val body = buildString {
             append(formatStart(source))

@@ -13,6 +13,7 @@ data class GeminiInteractionRequest(
 
 /** Gemini に利用させるツール。 */
 enum class GeminiInteractionTool(val apiType: String) {
+    /** Google SearchでWeb上の根拠を調査する。 */
     GoogleSearch("google_search"),
 }
 

@@ -16,6 +16,7 @@ value class EventUuid(override val value: Uuid) : EntityUuid
 @JvmInline
 value class EventCongestionForecastUuid(override val value: Uuid) : EntityUuid {
     companion object {
+        /** 新しい混雑予測 UUID を採番する。 */
         fun new(): EventCongestionForecastUuid = EventCongestionForecastUuid(Uuid.random())
     }
 }
@@ -24,6 +25,7 @@ value class EventCongestionForecastUuid(override val value: Uuid) : EntityUuid {
 @JvmInline
 value class GenerationInputHash private constructor(val value: String) {
     companion object {
+        /** 64桁の小文字16進文字列から生成入力ハッシュを作成する。 */
         fun Raise<CongestionError.ValidationError>.generationInputHash(value: String): GenerationInputHash {
             ensure(HASH_PATTERN.matches(value)) { CongestionError.ValidationError.InvalidGenerationInputHash }
             return GenerationInputHash(value)
@@ -42,6 +44,7 @@ data class CongestionPeriod private constructor(
     val description: String,
 ) {
     companion object {
+        /** 時刻範囲と空文字を検証して混雑期間を作成する。 */
         fun Raise<CongestionError.ValidationError>.congestionPeriod(
             start: Instant,
             end: Instant,
@@ -68,6 +71,7 @@ data class EventCongestionForecast private constructor(
     val periods: List<CongestionPeriod>,
 ) {
     companion object {
+        /** 予定と生成条件から最大3件の混雑期間を持つ予測を作成する。 */
         fun Raise<CongestionError.ValidationError>.forecast(
             eventUuid: EventUuid,
             generationInputHash: String,
