@@ -1,5 +1,7 @@
 package com.crowdodge.app.migration
 
+import com.crowdodge.congestion.infrastructure.persistence.EventCongestionForecastsTable
+import com.crowdodge.congestion.infrastructure.persistence.EventCongestionsTable
 import com.crowdodge.event.infrastructure.persistence.EventCalendarSyncsTable
 import com.crowdodge.event.infrastructure.persistence.EventsTable
 import com.crowdodge.notification.infrastructure.persistence.NotificationSchedulesTable
@@ -43,7 +45,8 @@ private val tables: Array<Table> = arrayOf(
     EventCalendarSyncsTable,
 //    EventDestinationsTable,
 //    EventDestinationLinksTable,
-//    EventCongestionsTable,
+    EventCongestionForecastsTable,
+    EventCongestionsTable,
     NotificationSchedulesTable,
 )
 
