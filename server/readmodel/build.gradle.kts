@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    alias(libs.plugins.kotlin.serialization)
 }
 
 kotlin {
@@ -22,7 +21,6 @@ dependencies {
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.exposed.r2dbc)
     implementation(libs.kotlinx.coroutines.core)
-    implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)
 
     testImplementation(libs.kotest.runner.junit5)
