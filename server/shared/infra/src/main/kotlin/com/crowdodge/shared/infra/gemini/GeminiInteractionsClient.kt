@@ -47,12 +47,16 @@ class GeminiInteractionsClient(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
-    /** Gemini へリクエストを送り、完了した応答を返す。 */
-    suspend fun interact(request: GeminiInteractionRequest): GeminiInteractionResult {
+    /** 指定モデルの Gemini へリクエストを送り、完了した応答を返す。 */
+    suspend fun interact(
+        request: GeminiInteractionRequest,
+        model: String,
+    ): GeminiInteractionResult {
+        require(model.isNotBlank()) { "Gemini model is required" }
         var attempt = 0
         while (true) {
             try {
-                return requestOnce(request)
+                return requestOnce(request, model)
             } catch (exception: kotlinx.coroutines.CancellationException) {
                 throw exception
             } catch (exception: Exception) {
@@ -71,11 +75,14 @@ class GeminiInteractionsClient(
         }
     }
 
-    private suspend fun requestOnce(request: GeminiInteractionRequest): GeminiInteractionResult {
+    private suspend fun requestOnce(
+        request: GeminiInteractionRequest,
+        model: String,
+    ): GeminiInteractionResult {
         val response = httpClient.post("${config.apiBaseUrl.trimEnd('/')}/v1/interactions") {
             contentType(ContentType.Application.Json)
             header("x-goog-api-key", config.apiKey)
-            setBody(Json.encodeToString(JsonElement.serializer(), requestBody(request)))
+            setBody(Json.encodeToString(JsonElement.serializer(), requestBody(request, model)))
         }
         if (response.status.value !in 200..299) throw httpFailure(response)
 
@@ -115,8 +122,11 @@ class GeminiInteractionsClient(
         )
     }
 
-    private fun requestBody(request: GeminiInteractionRequest): JsonObject = buildJsonObject {
-        put("model", config.model)
+    private fun requestBody(
+        request: GeminiInteractionRequest,
+        model: String,
+    ): JsonObject = buildJsonObject {
+        put("model", model)
         put("input", request.input)
         put("response_format", request.responseFormat)
         if (request.tools.isNotEmpty()) {

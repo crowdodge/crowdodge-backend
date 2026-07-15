@@ -57,6 +57,7 @@ class GeminiInteractionsClientTest : FunSpec({
                 input = "input",
                 responseFormat = buildJsonObject { put("type", "text") },
             ),
+            model = "gemini-3.5-flash",
         )
 
         result shouldBe GeminiInteractionResult(
@@ -71,7 +72,6 @@ class GeminiInteractionsClientTest : FunSpec({
         requests.single().method shouldBe HttpMethod.Post
         requests.single().url.toString() shouldBe "https://example.test/v1/interactions"
         requests.single().headers["x-goog-api-key"] shouldBe "secret"
-        requests.single().body.toByteArray().decodeToString() shouldContain "\"model\":\"gemini-3.5-flash\""
         requests.single().body.toByteArray().decodeToString() shouldContain "\"input\":\"input\""
         requests.single().body.toByteArray().decodeToString() shouldContain "\"response_format\""
         httpClient.close()
@@ -97,11 +97,39 @@ class GeminiInteractionsClientTest : FunSpec({
                 responseFormat = buildJsonObject { put("type", "text") },
                 tools = setOf(GeminiInteractionTool.GoogleSearch),
             ),
+            model = "gemini-3.5-flash",
         )
 
         val requestBody = requests.single().body.toByteArray().decodeToString()
         requestBody shouldContain "\"tools\":[{\"type\":\"google_search\"}]"
         requestBody shouldContain "\"store\":false"
+        httpClient.close()
+    }
+
+    test("呼び出しで指定したモデルをrequest bodyへ含める") {
+        val requests = mutableListOf<io.ktor.client.request.HttpRequestData>()
+        val httpClient = mockHttpClient(
+            responses = mutableListOf(HttpStatusCode.OK to interactionResponse("{\"result\":true}")),
+            requests = requests,
+        )
+        val client = GeminiInteractionsClient(
+            httpClient = httpClient,
+            config = GeminiInteractionsConfig(
+                apiBaseUrl = "https://example.test",
+                apiKey = "secret",
+            ),
+        )
+
+        client.interact(
+            request = GeminiInteractionRequest(
+                input = "input",
+                responseFormat = buildJsonObject { put("type", "text") },
+            ),
+            model = "gemini-3.1-flash-lite",
+        )
+
+        requests.single().body.toByteArray().decodeToString() shouldContain
+            "\"model\":\"gemini-3.1-flash-lite\""
         httpClient.close()
     }
 
@@ -124,6 +152,7 @@ class GeminiInteractionsClientTest : FunSpec({
                 input = "input",
                 responseFormat = buildJsonObject { put("type", "text") },
             ),
+            model = "gemini-3.5-flash",
         )
 
         val requestBody = requests.single().body.toByteArray().decodeToString()
@@ -156,6 +185,7 @@ class GeminiInteractionsClientTest : FunSpec({
                     input = "input",
                     responseFormat = buildJsonObject { put("type", "text") },
                 ),
+                model = "gemini-3.5-flash",
             )
         }
 
@@ -188,6 +218,7 @@ class GeminiInteractionsClientTest : FunSpec({
                 input = "input",
                 responseFormat = buildJsonObject { put("type", "text") },
             ),
+            model = "gemini-3.5-flash",
         )
 
         requests shouldHaveSize 2
@@ -215,6 +246,7 @@ class GeminiInteractionsClientTest : FunSpec({
                     input = "input",
                     responseFormat = buildJsonObject { put("type", "text") },
                 ),
+                model = "gemini-3.5-flash",
             )
         }
 
@@ -246,6 +278,7 @@ class GeminiInteractionsClientTest : FunSpec({
                     input = "input",
                     responseFormat = buildJsonObject { put("type", "text") },
                 ),
+                model = "gemini-3.5-flash",
             )
         }
 
