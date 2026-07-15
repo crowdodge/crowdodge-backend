@@ -19,8 +19,4 @@ object EventCongestionsTable : TimestampedTable("event_congestions") {
     val description = text("description")
     override val primaryKey: PrimaryKey
         get() = PrimaryKey(eventCongestionUuid)
-
-    init {
-        index(false, eventUuid, congestionStartTime, congestionEndTime)
-    }
 }

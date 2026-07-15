@@ -15,7 +15,6 @@ object EventCongestionForecastsTable : TimestampedTable("event_congestion_foreca
 
     init {
         uniqueIndex(eventUuid)
-        index(false, generationInputHash, generatedAt)
     }
 }
 
