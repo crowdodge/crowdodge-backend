@@ -49,7 +49,8 @@ enum class NotificationStatus(val value: String) {
 /**
  * 通知スケジュール（notification_schedules）。独立集約。
  * user / event は値参照（[userUuid] / [eventUuid]）。
- * 状態遷移: pending → processing → completed / failed。cancel は pending / processing から可。
+ * 状態遷移: pending → processing → completed / failed。処理全体の失敗時だけ processing → pending を許可する。
+ * cancel は pending / processing から可。
  */
 @ConsistentCopyVisibility
 data class NotificationSchedule private constructor(
@@ -62,6 +63,10 @@ data class NotificationSchedule private constructor(
 ) {
     fun markProcessing(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(NotificationStatus.Processing, allowedFrom = setOf(NotificationStatus.Pending))
+
+    /** 処理全体の失敗後に、次回実行で再取得できる状態へ戻す。 */
+    fun returnToPending(): Either<NotificationError.TransitionError, NotificationSchedule> =
+        transitionTo(NotificationStatus.Pending, allowedFrom = setOf(NotificationStatus.Processing))
 
     fun complete(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(NotificationStatus.Completed, allowedFrom = setOf(NotificationStatus.Processing))
