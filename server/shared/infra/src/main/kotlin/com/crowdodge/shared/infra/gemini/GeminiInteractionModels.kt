@@ -22,13 +22,6 @@ data class GeminiInteractionResult(
     val interactionId: String,
     val outputText: String,
     val searchQueries: List<String>,
-    val groundingSources: List<GeminiGroundingSource> = emptyList(),
-)
-
-/** Gemini の回答根拠となった Web ページ。 */
-data class GeminiGroundingSource(
-    val url: String,
-    val title: String?,
 )
 
 /** Gemini Interactions API の応答 JSON。 */
@@ -58,13 +51,4 @@ internal data class GeminiGoogleSearchArguments(
 internal data class GeminiInteractionContent(
     val type: String? = null,
     val text: String? = null,
-    val annotations: List<GeminiInteractionAnnotation>? = null,
-)
-
-/** モデル出力へ付与された根拠情報。 */
-@Serializable
-internal data class GeminiInteractionAnnotation(
-    val type: String? = null,
-    val url: String? = null,
-    val title: String? = null,
 )

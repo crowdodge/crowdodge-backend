@@ -164,10 +164,8 @@ class GenerateCongestionInfoUseCase(
 
         if (verifiedForecasts.isEmpty()) return
 
-        transactions.inTransaction {
-            verifiedForecasts.forEach { verified -> forecasts.replace(verified.forecast) }
-        }
         verifiedForecasts.forEach { verified ->
+            transactions.inTransaction { forecasts.replace(verified.forecast) }
             recordSuccess(resultsByEvent, verified.eventUuid, verified.source, verified.periods)
         }
     }

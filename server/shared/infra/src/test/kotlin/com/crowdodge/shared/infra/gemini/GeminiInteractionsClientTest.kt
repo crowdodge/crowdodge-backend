@@ -28,17 +28,12 @@ class GeminiInteractionsClientTest : FunSpec({
                 HttpStatusCode.OK to interactionResponse(
                     InteractionResponseFixture(
                         modelText = "{\"result\":true}",
-                        searchQueries = listOf("会場 2026年8月1日 イベント", "経由駅 花火大会"),
+                        searchQueries = listOf(
+                            " 会場 2026年8月1日 イベント ",
+                            " ",
+                            "経由駅 花火大会",
+                        ),
                         earlierModelText = "{\"result\":false}",
-                        annotations = listOf(
-                            TestAnnotation("url_citation", "https://example.com/final", "公式情報"),
-                            TestAnnotation("other", "https://example.com/ignored", "対象外"),
-                            TestAnnotation("url_citation", " ", "空URL"),
-                            TestAnnotation("url_citation", "https://example.com/untitled", null),
-                        ),
-                        earlierAnnotations = listOf(
-                            TestAnnotation("url_citation", "https://example.com/earlier", "以前の出力"),
-                        ),
                     ),
                 ),
             ),
@@ -64,10 +59,6 @@ class GeminiInteractionsClientTest : FunSpec({
             interactionId = "interaction-1",
             outputText = "{\"result\":true}",
             searchQueries = listOf("会場 2026年8月1日 イベント", "経由駅 花火大会"),
-            groundingSources = listOf(
-                GeminiGroundingSource("https://example.com/final", "公式情報"),
-                GeminiGroundingSource("https://example.com/untitled", null),
-            ),
         )
         requests.single().method shouldBe HttpMethod.Post
         requests.single().url.toString() shouldBe "https://example.test/v1/interactions"
@@ -311,8 +302,6 @@ private data class InteractionResponseFixture(
     val searchQueries: List<String> = emptyList(),
     val interactionId: String? = "interaction-1",
     val earlierModelText: String? = null,
-    val annotations: List<TestAnnotation> = emptyList(),
-    val earlierAnnotations: List<TestAnnotation> = emptyList(),
 )
 
 private fun interactionResponse(modelText: String): String =
@@ -322,7 +311,7 @@ private fun interactionResponse(fixture: InteractionResponseFixture): String = b
     fixture.interactionId?.let { put("id", it) }
     put("status", "completed")
     putJsonArray("steps") {
-        fixture.earlierModelText?.let { add(modelOutputStep(it, fixture.earlierAnnotations)) }
+        fixture.earlierModelText?.let { add(modelOutputStep(it)) }
         fixture.searchQueries.forEach { query ->
             add(
                 buildJsonObject {
@@ -338,41 +327,21 @@ private fun interactionResponse(fixture: InteractionResponseFixture): String = b
                 },
             )
         }
-        add(modelOutputStep(fixture.modelText, fixture.annotations))
+        add(modelOutputStep(fixture.modelText))
     }
 }.toString()
 
-private fun modelOutputStep(
-    modelText: String,
-    annotations: List<TestAnnotation> = emptyList(),
-) = buildJsonObject {
+private fun modelOutputStep(modelText: String) = buildJsonObject {
     put("type", "model_output")
     putJsonArray("content") {
         add(
             buildJsonObject {
                 put("type", "text")
                 put("text", modelText)
-                putJsonArray("annotations") {
-                    annotations.forEach { annotation ->
-                        add(
-                            buildJsonObject {
-                                put("type", annotation.type)
-                                annotation.url?.let { put("url", it) }
-                                annotation.title?.let { put("title", it) }
-                            },
-                        )
-                    }
-                }
             },
         )
     }
 }
-
-private data class TestAnnotation(
-    val type: String,
-    val url: String?,
-    val title: String?,
-)
 
 private fun io.ktor.http.content.OutgoingContent.toByteArray(): ByteArray =
     when (this) {

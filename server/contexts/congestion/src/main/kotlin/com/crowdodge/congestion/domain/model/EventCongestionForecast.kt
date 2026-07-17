@@ -84,7 +84,7 @@ data class EventCongestionForecast private constructor(
                 eventUuid = eventUuid,
                 generationInputHash = GenerationInputHash.run { generationInputHash(generationInputHash) },
                 generatedAt = generatedAt,
-                periods = periods,
+                periods = periods.toList(),
             )
         }
 

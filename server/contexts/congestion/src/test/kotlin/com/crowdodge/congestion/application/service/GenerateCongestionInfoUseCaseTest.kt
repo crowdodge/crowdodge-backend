@@ -217,7 +217,7 @@ class GenerateCongestionInfoUseCaseTest : FunSpec({
         }.message shouldBe "検証済み混雑予測の集約構築に失敗しました: INVALID_GENERATION_INPUT_HASH"
     }
 
-    test("複数予定の予測を1トランザクションで保存する") {
+    test("複数予定の予測をforecastごとのトランザクションで保存する") {
         val firstEventUuid = EventUuid(Uuid.random())
         val secondEventUuid = EventUuid(Uuid.random())
         val candidates = mapOf(
@@ -238,7 +238,7 @@ class GenerateCongestionInfoUseCaseTest : FunSpec({
         ).execute(candidates.keys)
 
         repository.calls.size shouldBe 2
-        transactions.inTransactionCalls shouldBe 1
+        transactions.inTransactionCalls shouldBe 2
     }
 
     test("空入力では生成処理を開始しない") {

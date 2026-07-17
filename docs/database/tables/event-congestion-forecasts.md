@@ -22,7 +22,6 @@
 ## 制約
 
 - 1つの予定につき混雑予測結果は最大1件とする。
-- `generation_input_hash`と`generated_at`の複合インデックスを持つ。
 - `event_uuid`はevent BCへの値参照とし、物理外部キーを張らない。
 
 ## 再利用条件

@@ -61,4 +61,20 @@ class EventCongestionForecastTest : FunSpec({
             )
         }.shouldBeLeft() shouldBe CongestionError.ValidationError.TooManyCongestionPeriods
     }
+
+    test("生成後に入力リストを変更してもforecastの期間は変わらない") {
+        val periods = mutableListOf(period())
+        val forecast = either {
+            forecast(
+                EventUuid(Uuid.random()),
+                "a".repeat(64),
+                end,
+                periods,
+            )
+        }.shouldBeRight()
+
+        periods += period()
+
+        forecast.periods.size shouldBe 1
+    }
 })

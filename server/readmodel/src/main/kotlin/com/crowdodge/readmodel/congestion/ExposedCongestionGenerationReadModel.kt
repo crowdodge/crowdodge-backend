@@ -102,19 +102,17 @@ class ExposedCongestionGenerationReadModel(
                 latitude = first[EventDestinationsTable.destinationPoint].latitude,
                 longitude = first[EventDestinationsTable.destinationPoint].longitude,
             ),
-            outboundRoute = first[EventDestinationsTable.routeInformation].let { route ->
-                CongestionRoute(
-                    steps = route.routeSteps.map { step ->
-                        CongestionRouteStep(
-                            fromName = step.fromName,
-                            toName = step.toName,
-                            lineName = step.lineName,
-                            moveType = step.moveType,
-                            callingAt = step.callingAt,
-                        )
-                    },
-                )
-            },
+            outboundRoute = CongestionRoute(
+                steps = first[EventDestinationsTable.routeInformation].routeSteps.map { step ->
+                    CongestionRouteStep(
+                        fromName = step.fromName,
+                        toName = step.toName,
+                        lineName = step.lineName,
+                        moveType = step.moveType,
+                        callingAt = step.callingAt,
+                    )
+                },
+            ),
             travelDuration = first[EventDestinationsTable.routeDuration],
         )
 

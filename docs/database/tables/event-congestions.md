@@ -25,5 +25,4 @@
 ## 制約
 
 - 混雑予測結果の削除時は、紐づく混雑期間をCASCADEで削除する。
-- `event_uuid`、`congestion_start_time`、`congestion_end_time`の複合インデックスを持つ。
 - `event_uuid`はevent BCへの値参照とし、物理外部キーを張らない。

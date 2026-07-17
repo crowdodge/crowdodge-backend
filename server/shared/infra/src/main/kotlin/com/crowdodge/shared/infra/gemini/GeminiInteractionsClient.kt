@@ -109,16 +109,12 @@ class GeminiInteractionsClient(
         val searchQueries = interaction.steps.orEmpty()
             .filter { it.type == "google_search_call" }
             .flatMap { it.arguments?.queries.orEmpty() }
-        val groundingSources = finalModelOutput?.content.orEmpty()
-            .filter { it.type == "text" }
-            .flatMap { it.annotations.orEmpty() }
-            .filter { it.type == "url_citation" && !it.url.isNullOrBlank() }
-            .map { GeminiGroundingSource(url = it.url!!, title = it.title) }
+            .map(String::trim)
+            .filter(String::isNotEmpty)
         return GeminiInteractionResult(
             interactionId = interactionId,
             outputText = text,
             searchQueries = searchQueries,
-            groundingSources = groundingSources,
         )
     }
 
