@@ -49,11 +49,14 @@ class ArchitectureTest : FunSpec({
             .assertFalse { file -> file.hasImport { it.name.contains(".presentation.") } }
     }
 
-    test("readmodel は shared・Table 定義・notification の公開ポートと VO 以外の crowdodge コードに依存しない") {
-        val allowedPrefixes = listOf(
+    test("readmodel は役割が許可された公開port・Table定義・sharedと公開UUIDだけに依存する") {
+        val allowedRolePrefixes = listOf(
             "com.crowdodge.shared.",
-            "com.crowdodge.notification.application.port.",
-            "com.crowdodge.notification.domain.model.",
+        )
+        val allowedExactImports = setOf(
+            "com.crowdodge.notification.domain.model.EventUuid",
+            "com.crowdodge.congestion.domain.model.EventUuid",
+            "com.crowdodge.congestion.domain.model.EventCongestionForecastUuid",
         )
         Konsist.scopeFromProduction()
             .files
@@ -61,7 +64,9 @@ class ArchitectureTest : FunSpec({
             .assertFalse { file ->
                 file.hasImport { imp ->
                     imp.name.startsWith("com.crowdodge.") &&
-                        allowedPrefixes.none { imp.name.startsWith(it) } &&
+                        imp.name !in allowedExactImports &&
+                        allowedRolePrefixes.none { imp.name.startsWith(it) } &&
+                        !imp.name.contains(".application.port.") &&
                         !imp.name.contains(".infrastructure.persistence.")
                 }
             }

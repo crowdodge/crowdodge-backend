@@ -15,6 +15,8 @@ dependencies {
     // 他 BC の Table 定義を import するための依存（読み取り専用）。
     implementation(projects.contexts.event)
     implementation(projects.contexts.user)
+    implementation(projects.contexts.destination)
+    implementation(projects.contexts.congestion)
     implementation(libs.exposed.core)
     implementation(libs.exposed.kotlin.datetime)
     implementation(libs.exposed.r2dbc)

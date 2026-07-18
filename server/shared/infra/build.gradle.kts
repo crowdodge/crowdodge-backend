@@ -24,12 +24,14 @@ dependencies {
 
     // Problem(RFC9457) を Ktor 応答に載せるため最小の ktor-server-core を参照（§3 shared/infra）
     implementation(libs.ktor.server.core)
+    implementation(libs.ktor.client.core)
     implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.logback.classic)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
+    testImplementation(libs.ktor.client.mock)
     // readiness の DB ping を実 PostgreSQL で結合検証（§13 infrastructure）
     testImplementation(libs.kotest.extensions.testcontainers)
     testImplementation(libs.testcontainers.postgresql)

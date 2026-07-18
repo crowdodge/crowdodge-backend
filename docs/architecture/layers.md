@@ -33,7 +33,7 @@ presentation   infrastructure
 - `presentation` と `infrastructure` は互いに依存しない。
 - コンテキスト間の実装直接依存は禁止する。
 - コンテキスト間連携は公開ドメインイベントまたは公開ポートで行う。
-- `readmodel` モジュールは BC 横断の読み取り専用クエリを提供する。contexts の `infrastructure.persistence` の Table 定義と application の公開ポートのみ import でき、書き込みは行わない。contexts は readmodel に依存しない。
+- `readmodel` モジュールは BC 横断の読み取り専用クエリを提供する。`shared`、contexts の `infrastructure.persistence` の Table 定義と `application.port` の公開ポート、および公開 UUID（`notification.domain.model.EventUuid`、`congestion.domain.model.EventUuid`、`congestion.domain.model.EventCongestionForecastUuid`）のみ import でき、書き込みは行わない。contexts は readmodel に依存しない。
 
 ## 配線
 
