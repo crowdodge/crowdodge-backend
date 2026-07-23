@@ -22,7 +22,7 @@ application {
 }
 
 dependencies {
-    // app だけが全 BC（現時点では shared）を知り、Koin で配線する（§4）。
+    // app だけが全 BC を知り、各 BC の DI モジュールと BC 間連携を束ねる。
     implementation(projects.shared.kernel)
     implementation(projects.shared.infra)
     implementation(projects.contexts.user)
@@ -30,19 +30,27 @@ dependencies {
     implementation(projects.contexts.destination)
     implementation(projects.contexts.congestion)
     implementation(projects.contexts.notification)
+    implementation(projects.readmodel)
 
     // Ktor サーバ
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.content.negotiation)
+    implementation(libs.ktor.server.auth)
+    implementation(libs.ktor.server.auth.jwt)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.status.pages)
     implementation(libs.ktor.server.call.logging)
     implementation(libs.ktor.server.call.id)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.java.jwt)
+    implementation(libs.firebase.admin)
 
     // DI
     implementation(libs.koin.ktor)
     implementation(libs.koin.logger.slf4j)
+
+    implementation(libs.kotlinx.coroutines.core)
 
     // マイグレーション SQL 生成ツール（開発時のみ。JDBC で現スキーマと差分比較）
     implementation(libs.exposed.jdbc)
@@ -83,13 +91,32 @@ tasks.register<JavaExec>("generateMigration") {
     mainClass = "com.crowdodge.app.migration.GenerateMigrationMainKt"
 }
 
-// ビルド時の設定
+tasks.register<JavaExec>("renewGoogleCalendarWatches") {
+    group = "application"
+    description = "Google Calendar watchの整合・更新を1回実行する"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.crowdodge.app.calendar.GoogleCalendarWatchRenewalMainKt"
+}
+
+tasks.register<JavaExec>("dispatchNotifications") {
+    group = "application"
+    description = "期限到来した通知スケジュールの FCM 送信を1回実行する"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass = "com.crowdodge.app.notification.NotificationDispatchMainKt"
+}
+
+// デバッグ設定（entry build.gradle.kts）
 tasks.named<JavaExec>("run") {
   jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005")
 }
+
+// cleanタスクの変更（entry build.gradle.kts）
+// cleanタスク時に、build/ディレクトリごとではなくディレクトリの中身だけ削除する。
 tasks.named<Delete>("clean") {
   setDelete(fileTree(layout.buildDirectory))
 }
+
+// ビルド設定（entry build.gradle.kts）
 tasks.named<ShadowJar>("shadowJar") {
     // NOTE: [以降例](https://gradleup.com/shadow/changes/#migration-example)に従って、マージすべきか・先勝ちで良いかを判断する
 

@@ -1,6 +1,7 @@
 package com.crowdodge.app.migration
 
 import com.crowdodge.shared.infra.db.DatabaseConfig
+import com.crowdodge.shared.infra.db.DatabaseSslMode
 import com.typesafe.config.ConfigFactory
 
 /**
@@ -11,16 +12,23 @@ import com.typesafe.config.ConfigFactory
  * JDBC は migration でのみ使うので、JDBC URL の組み立ても app に閉じる（shared/infra は R2DBC 専用）。
  */
 fun loadDatabaseConfig(): DatabaseConfig {
-    val c = ConfigFactory.load().getConfig("crowdodge.database")
+    val c = ConfigFactory.load().getConfig("crowdodge.migrationDatabase")
+    val sslMode = DatabaseSslMode.fromConfig(c.getString("sslMode"))
     return DatabaseConfig(
         host = c.getString("host"),
         port = c.getInt("port"),
         database = c.getString("name"),
         username = c.getString("username"),
         password = c.getString("password"),
+        sslMode = sslMode,
     )
 }
 
 /** Flyway / マイグレーション生成用の JDBC URL。認証情報は含めず別引数で渡す。 */
 fun jdbcUrl(config: DatabaseConfig): String =
-    "jdbc:postgresql://${config.host}:${config.port}/${config.database}"
+    buildString {
+        append("jdbc:postgresql://${config.host}:${config.port}/${config.database}")
+        if (config.sslMode != DatabaseSslMode.DISABLE) {
+            append("?sslmode=${config.sslMode.configValue}")
+        }
+    }

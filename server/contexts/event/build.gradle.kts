@@ -14,11 +14,19 @@ dependencies {
     implementation(libs.exposed.core)
     implementation(libs.exposed.kotlin.datetime)
 
+    implementation(libs.ktor.server.core)
+    implementation(libs.ktor.client.core)
+    implementation(libs.koin.ktor)
     implementation(libs.kotlinx.serialization.json)
 
     testImplementation(libs.kotest.runner.junit5)
     testImplementation(libs.kotest.assertions.core)
     testImplementation(libs.kotest.assertions.arrow)
+    testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.ktor.server.test.host)
+    testImplementation(libs.kotest.extensions.testcontainers)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.postgresql)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 

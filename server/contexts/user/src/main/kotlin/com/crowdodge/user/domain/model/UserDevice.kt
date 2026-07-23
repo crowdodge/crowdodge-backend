@@ -38,6 +38,9 @@ class UserDevice private constructor(
     val userUuid: UserUuid,
     val fcmToken: FcmToken,
 ) {
+    fun transferTo(userUuid: UserUuid): UserDevice =
+        UserDevice(userDeviceUuid, userUuid, fcmToken)
+
     companion object {
         /** 新規登録（新しい [UserDeviceUuid] を採番）。 */
         fun register(userUuid: UserUuid, fcmToken: FcmToken): UserDevice =

@@ -48,4 +48,61 @@ class ArchitectureTest : FunSpec({
             .withPackage("..infrastructure..")
             .assertFalse { file -> file.hasImport { it.name.contains(".presentation.") } }
     }
+
+    test("readmodel は役割が許可された公開port・Table定義・sharedと公開UUIDだけに依存する") {
+        val allowedRolePrefixes = listOf(
+            "com.crowdodge.shared.",
+        )
+        val allowedExactImports = setOf(
+            "com.crowdodge.notification.domain.model.EventUuid",
+            "com.crowdodge.congestion.domain.model.EventUuid",
+            "com.crowdodge.congestion.domain.model.EventCongestionForecastUuid",
+        )
+        Konsist.scopeFromProduction()
+            .files
+            .withPackage("com.crowdodge.readmodel..")
+            .assertFalse { file ->
+                file.hasImport { imp ->
+                    imp.name.startsWith("com.crowdodge.") &&
+                        imp.name !in allowedExactImports &&
+                        allowedRolePrefixes.none { imp.name.startsWith(it) } &&
+                        !imp.name.contains(".application.port.") &&
+                        !imp.name.contains(".infrastructure.persistence.")
+                }
+            }
+    }
+
+    test("readmodel は Exposed の書き込み関数を import しない") {
+        val writeFunctions = listOf(
+            "insert",
+            "update",
+            "deleteWhere",
+            "upsert",
+            "batchUpsert",
+            "replace",
+            "insertIgnore",
+        )
+        Konsist.scopeFromProduction()
+            .files
+            .withPackage("com.crowdodge.readmodel..")
+            .assertFalse { file ->
+                file.hasImport { imp -> writeFunctions.any { imp.name.endsWith(".$it") } }
+            }
+    }
+
+    test("contexts は readmodel に依存しない") {
+        val contextPackages = listOf(
+            "com.crowdodge.user..",
+            "com.crowdodge.event..",
+            "com.crowdodge.notification..",
+            "com.crowdodge.distination..",
+            "com.crowdodge.congestion..",
+        )
+        contextPackages.forEach { contextPackage ->
+            Konsist.scopeFromProject()
+                .files
+                .withPackage(contextPackage)
+                .assertFalse { file -> file.hasImport { it.name.startsWith("com.crowdodge.readmodel.") } }
+        }
+    }
 })

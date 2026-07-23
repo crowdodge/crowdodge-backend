@@ -16,4 +16,25 @@ data class DatabaseConfig(
     val database: String,
     val username: String,
     val password: String,
+    val sslMode: DatabaseSslMode = DatabaseSslMode.DISABLE,
+    val pgbouncer: Boolean = false,
 )
+
+enum class DatabaseSslMode(val configValue: String) {
+    DISABLE("disable"),
+    ALLOW("allow"),
+    PREFER("prefer"),
+    REQUIRE("require"),
+    VERIFY_CA("verify-ca"),
+    VERIFY_FULL("verify-full"),
+    ;
+
+    companion object {
+        fun fromConfig(value: String): DatabaseSslMode =
+            entries.firstOrNull { it.configValue == value.lowercase() }
+                ?: error(
+                    "Unsupported DB_SSL_MODE '$value'. " +
+                        "Use one of: ${entries.joinToString { it.configValue }}",
+                )
+    }
+}

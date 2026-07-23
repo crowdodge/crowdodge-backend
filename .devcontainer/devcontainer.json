@@ -47,7 +47,8 @@
             "plugins" : [
                 "com.intellij.exposed",
                 "com.intellij.reactivestreams",
-                "org.jetbrains.plugins.hocon"
+                "org.jetbrains.plugins.hocon",
+                "ru.adelf.idea.dotenv"
             ],
         },
     },

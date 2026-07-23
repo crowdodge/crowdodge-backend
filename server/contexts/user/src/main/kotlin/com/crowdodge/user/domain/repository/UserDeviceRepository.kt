@@ -1,6 +1,7 @@
 package com.crowdodge.user.domain.repository
 
 import com.crowdodge.shared.kernel.UserUuid
+import com.crowdodge.user.domain.model.FcmToken
 import com.crowdodge.user.domain.model.UserDevice
 import com.crowdodge.user.domain.model.UserDeviceUuid
 
@@ -15,4 +16,7 @@ interface UserDeviceRepository {
 
     /** 当該ユーザーの通知対象デバイス一覧（FCM 配信先）。 */
     suspend fun findByUserUuid(userUuid: UserUuid): List<UserDevice>
+
+    /** fcm_token での逆引き。 */
+    suspend fun findByFcmToken(fcmToken: FcmToken): UserDevice?
 }

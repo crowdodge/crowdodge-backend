@@ -21,12 +21,20 @@ data class EventRescheduled(
     override val occurredAt: Instant,
 ) : DomainEvent
 
+/** notification BC がスケジュールを再計算する必要がある変更理由。 */
+enum class NotificationTimingChangeReason {
+    RemindTimingChanged,
+    ScheduleChanged,
+    ScheduleAndRemindTimingChanged,
+}
+
 /**
- * 予定のリマインドタイミングだけが変更された（時刻等の予測関連は不変）。通知 BC が通知を再スケジュールする契機。
- * 目的地・混雑の再推定（高コスト）は不要なため [EventRescheduled] とは別イベントにする。
+ * 通知時刻に影響する予定変更。通知 BC が通知を再スケジュールする契機。
+ * [reason] が予定時刻の変更を含む場合は、混雑情報を即時に再計算・通知する。
  */
-data class EventRemindTimingChanged(
+data class EventNotificationTimingChanged(
     val eventUuid: EventUuid,
+    val reason: NotificationTimingChangeReason,
     override val occurredAt: Instant,
 ) : DomainEvent
 

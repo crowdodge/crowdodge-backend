@@ -1,9 +1,14 @@
 package com.crowdodge.app.migration
 
+import com.crowdodge.congestion.infrastructure.persistence.EventCongestionForecastsTable
+import com.crowdodge.congestion.infrastructure.persistence.EventCongestionsTable
 import com.crowdodge.event.infrastructure.persistence.EventCalendarSyncsTable
 import com.crowdodge.event.infrastructure.persistence.EventsTable
+import com.crowdodge.notification.infrastructure.persistence.NotificationSchedulesTable
+import com.crowdodge.user.infrastructure.persistence.UserAuthRefreshTokensTable
 import com.crowdodge.user.infrastructure.persistence.UserCalendarsTable
 import com.crowdodge.user.infrastructure.persistence.UserDevicesTable
+import com.crowdodge.user.infrastructure.persistence.UserGoogleCredentialsTable
 import com.crowdodge.user.infrastructure.persistence.UserItemsTable
 import com.crowdodge.user.infrastructure.persistence.UserSettingsTable
 import com.crowdodge.user.infrastructure.persistence.UserSubscriptionsTable
@@ -31,6 +36,8 @@ private val tables: Array<Table> = arrayOf(
     UsersTable,
     UserSettingsTable,
     UserCalendarsTable,
+    UserGoogleCredentialsTable,
+    UserAuthRefreshTokensTable,
     UserItemsTable,
     UserSubscriptionsTable,
     UserDevicesTable,
@@ -38,14 +45,16 @@ private val tables: Array<Table> = arrayOf(
     EventCalendarSyncsTable,
 //    EventDestinationsTable,
 //    EventDestinationLinksTable,
-//    EventCongestionsTable,
-//    NotificationSchedulesTable,
+    EventCongestionForecastsTable,
+    EventCongestionsTable,
+    NotificationSchedulesTable,
 )
 
 private const val MIGRATION_DIR = "src/main/resources/db/migration"
 
 // tables は静的な小配列で、Exposed のマイグレーション API が vararg のみを受けるため
 // spread は不可避。コピーのコストも無視できるため SpreadOperator を抑制する。
+/** 現在のDBスキーマとの差分から次のFlywayマイグレーションを生成する。 */
 @Suppress("SpreadOperator")
 @OptIn(org.jetbrains.exposed.v1.core.ExperimentalDatabaseMigrationApi::class)
 fun main() {

@@ -4,11 +4,13 @@ import arrow.core.getOrElse
 import arrow.core.raise.either
 import com.crowdodge.shared.kernel.PersistedDataCorruption
 import com.crowdodge.shared.kernel.UserUuid
+import com.crowdodge.user.domain.model.FcmToken
 import com.crowdodge.user.domain.model.FcmToken.Companion.fcmToken
 import com.crowdodge.user.domain.model.UserDevice
 import com.crowdodge.user.domain.model.UserDeviceUuid
 import com.crowdodge.user.domain.repository.UserDeviceRepository
 import com.crowdodge.user.infrastructure.persistence.UserDevicesTable
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.exposed.v1.core.ResultRow
@@ -47,6 +49,12 @@ class ExposedUserDeviceRepository : UserDeviceRepository {
             .where { UserDevicesTable.userUuid eq userUuid.value }
             .map { toDomain(it) }
             .toList()
+
+    override suspend fun findByFcmToken(fcmToken: FcmToken): UserDevice? =
+        UserDevicesTable.selectAll()
+            .where { UserDevicesTable.fcmToken eq fcmToken.value }
+            .firstOrNull()
+            ?.let { toDomain(it) }
 
     private fun toDomain(row: ResultRow): UserDevice =
         either {

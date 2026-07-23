@@ -73,6 +73,7 @@ RUN mkdir -p  \
     ./contexts/notification/build \
     ./contexts/user/build \
     ./konsist/build \
+    ./readmodel/build \
     ./shared/infra/build \
     ./shared/kernel/build
 
@@ -92,6 +93,7 @@ COPY --chown=${HOST_UID}:${HOST_GID} ./contexts/event/build.gradle.kts ./context
 COPY --chown=${HOST_UID}:${HOST_GID} ./contexts/notification/build.gradle.kts ./contexts/notification/
 COPY --chown=${HOST_UID}:${HOST_GID} ./contexts/user/build.gradle.kts ./contexts/user/
 COPY --chown=${HOST_UID}:${HOST_GID} ./konsist/build.gradle.kts ./konsist/
+COPY --chown=${HOST_UID}:${HOST_GID} ./readmodel/build.gradle.kts ./readmodel/
 COPY --chown=${HOST_UID}:${HOST_GID} ./shared/infra/build.gradle.kts ./shared/infra/
 COPY --chown=${HOST_UID}:${HOST_GID} ./shared/kernel/build.gradle.kts ./shared/kernel/
 
@@ -114,26 +116,28 @@ EXPOSE 8080 5005
 
 CMD [ "sleep", "infinity" ]
 
-# デプロイ用 ================
+FROM eclipse-temurin:21-jdk AS build
 
-# Stage1: ビルド
-FROM base AS builder
+WORKDIR /workspace
 
-COPY . .
+COPY gradle ./gradle
+COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
+COPY app ./app
+COPY shared ./shared
+COPY contexts ./contexts
+COPY readmodel ./readmodel
+COPY konsist ./konsist
 
-# NOTE: :app:はマルチモジュールにおけるエンドポイントとなるモジュール名
-# NOTE: シングルモジュールでは不要なので、`:modulename:buildFatJar` -> `buildFatJar`
-RUN ./gradlew :app:buildFatJar --no-daemon
+RUN ./gradlew :app:installDist --no-daemon
 
-# Stage2: 軽量イメージでの実行
-FROM gcr.io/distroless/java21-debian13:nonroot AS production
+FROM eclipse-temurin:21-jre
 
 WORKDIR /app
 
-# NOTE: `build/`の一つ上の階層である`app/`はマルチモジュールにおけるエンドポイントとなるモジュール名
-# NOTE: シングルモジュールでは不要なので、`/app/app/build/libs/app.jar` -> `/app/build/libs/app.jar`
-COPY --chown=nonroot:nonroot --from=builder /app/app/build/libs/app.jar ./app.jar
+ENV PORT=8080
+
+COPY --from=build /workspace/app/build/install/app ./
 
 EXPOSE 8080
 
-CMD ["-jar", "app.jar"]
+CMD ["./bin/app"]

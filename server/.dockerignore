@@ -1,14 +1,12 @@
-# 依存パッケージ
-.gradle/
+.git
+.gradle
+**/.gradle
+**/build
+.idea
+.codex
+.agents
+*.iml
+*.log
 
 # 開発用ツール
 .editorconfig
-
-# テスト
-# `./gradlew build`はデフォルトでテストのチェックを含む
-# src/test
-
-# ビルド成果物
-build/
-**/build/
-out/
