@@ -6,6 +6,11 @@
 
 set -e
 
+# コンテナ内での実行のため、以下の処理で環境変数を読み込む
+set -a
+source ../.env
+set +a
+
 CLEANED=0
 SHUTDOWN_REQUEST=0
 
