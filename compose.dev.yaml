@@ -1,0 +1,90 @@
+# 開発用 DB コンテナ（PostgreSQL + PostGIS）。
+# 開発専用。本番/共有環境では使用せず、認証情報は env / シークレットで注入すること。
+#
+# 接続情報はアプリ(application.conf)と同じ DB_* 一系統で扱い、
+# ここで PostgreSQL イメージが要求する固定名 POSTGRES_* へマッピングする。
+# 既定値は application.conf と同じ crowdodge。.env / env で上書きできる。
+#
+# 注意: .env は compose が読んで DB コンテナに注入するが、ホスト起動するアプリ
+#       (./gradlew :app:run) は .env を読まない。既定のままなら両者一致で動く。
+
+name: crowdodge-dev
+
+services:
+  # Infrastructure
+
+  db:
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_USER:-crowdodge} -d ${DB_NAME:-crowdodge}",
+        ]
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-crowdodge}
+      POSTGRES_USER: ${DB_USER:-crowdodge}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-crowdodge}
+    networks: [dev-net]
+
+  # Backend
+  server:
+    build:
+      target: development
+      args:
+        HOST_UID: '${HOST_UID:?"HOST_UID is required. Please run: HOST_UID=$(id -u) HOST_UID=$(id -g) docker compose up -d --build"}'
+        HOST_GID: '${HOST_GID:?"HOST_GID is required. Please run: HOST_UID=$(id -u) HOST_GID=$(id -g) docker compose up -d --build"}'
+    ports:
+      - "${BACK_PORT:-8080}:8080"
+      - "${DEBUG_PORT:-5005}:5005"
+    env_file:
+      - .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+    volumes:
+      - "./:/workspace"
+      - "gradle-user-caches:/home/app/.gradle/caches"
+      - "gradle-user-wrapper:/home/app/.gradle/wrapper"
+      - "jetbrains-cache:/home/app/.cache/JetBrains"
+      - "jetbrains-config:/home/app/.config/JetBrains"
+      - "jetbrains-share:/home/app/.local/JetBrains"
+      - "gradle-pj:/workspace/server/.gradle"
+      - "build-pj:/workspace/server/build"
+      # NOTE: 各種モジュールの/app/*/build
+      # NOTE: モジュールが増えるたびにここに追加
+      - "build-app:/workspace/server/app/build"
+      - "build-contexts-congestion:/workspace/server/contexts/congestion/build"
+      - "build-contexts-destination:/workspace/server/contexts/destination/build"
+      - "build-contexts-event:/workspace/server/contexts/event/build"
+      - "build-contexts-notification:/workspace/server/contexts/notification/build"
+      - "build-contexts-user:/workspace/server/contexts/user/build"
+      - "build-konsist:/workspace/server/konsist/build"
+      - "build-shared-infra:/workspace/server/shared/infra/build"
+      - "build-shared-kernel:/workspace/server/shared/kernel/build"
+    networks: [dev-net]
+
+volumes:
+  gradle-user-caches:
+  gradle-user-wrapper:
+  jetbrains-cache:
+  jetbrains-config:
+  jetbrains-share:
+  gradle-pj:
+  build-pj: # シングル・マルチモジュールともに
+  # NOTE: i/o改善のために、各種モジュールの/app/*/build
+  # NOTE: モジュールが増えるたびにここに追加
+  build-app:
+  build-contexts-congestion:
+  build-contexts-destination:
+  build-contexts-event:
+  build-contexts-notification:
+  build-contexts-user:
+  build-konsist:
+  build-shared-infra:
+  build-shared-kernel:
+
+networks:
+  dev-net:
