@@ -37,6 +37,12 @@ class NotificationScheduleTest : FunSpec({
             .fail().shouldBeRight().status shouldBe NotificationStatus.Failed
     }
 
+    test("処理全体の失敗時だけ Processing → Pending を許可する") {
+        pending().markProcessing().shouldBeRight()
+            .returnToPending().shouldBeRight().status shouldBe NotificationStatus.Pending
+        pending().returnToPending().shouldBeLeft()
+    }
+
     test("cancel は Pending と Processing の両方から許可する") {
         pending().cancel().shouldBeRight().status shouldBe NotificationStatus.Canceled
         pending().markProcessing().shouldBeRight()

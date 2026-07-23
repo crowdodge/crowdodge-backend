@@ -50,4 +50,4 @@ contexts/<context>/
 | モジュール | 役割 |
 |---|---|
 | `shared/kernel` | 共通VO、`DomainEvent`、共通エラー、`TransactionRunner` |
-| `shared/infra` | R2DBC基盤、Problem Details、DB readiness probe、Domain Event配送 |
+| `shared/infra` | R2DBC基盤、Problem Details、DB readiness probe、Domain Event配送、Gemini Interactions API クライアント基盤 |

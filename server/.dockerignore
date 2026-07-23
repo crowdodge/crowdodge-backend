@@ -7,3 +7,6 @@
 .agents
 *.iml
 *.log
+
+# 開発用ツール
+.editorconfig

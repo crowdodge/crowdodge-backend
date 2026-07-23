@@ -6,10 +6,11 @@ import com.crowdodge.notification.application.port.PushNotification
 import com.crowdodge.shared.kernel.AppTime
 import kotlinx.datetime.toLocalDateTime
 
-/** 通知ペイロード（タイトル・予定日時・混雑情報の最小構成）を組み立てる。 */
+/** 予定と混雑情報から通知メッセージを作成する。 */
 object NotificationMessageFactory {
     private const val DEFAULT_TITLE = "予定のお知らせ"
 
+    /** 予定と任意の混雑情報からPush通知を作成する。 */
     fun create(source: EventDispatchSource, congestion: CongestionInfo?): PushNotification {
         val body = buildString {
             append(formatStart(source))

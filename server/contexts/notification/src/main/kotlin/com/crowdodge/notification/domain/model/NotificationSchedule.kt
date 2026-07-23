@@ -13,6 +13,7 @@ import kotlin.uuid.Uuid
 @JvmInline
 value class NotificationScheduleUuid(override val value: Uuid) : EntityUuid {
     companion object {
+        /** 新しい通知スケジュール UUID を採番する。 */
         fun new(): NotificationScheduleUuid = NotificationScheduleUuid(Uuid.random())
     }
 }
@@ -28,6 +29,7 @@ enum class NotificationKind(val value: String) {
     ;
 
     companion object {
+        /** 永続化値に対応する通知種別を返す。 */
         fun fromOrNull(value: String): NotificationKind? = entries.firstOrNull { it.value == value }
     }
 }
@@ -42,6 +44,7 @@ enum class NotificationStatus(val value: String) {
     ;
 
     companion object {
+        /** 永続化値に対応する通知状態を返す。 */
         fun fromOrNull(value: String): NotificationStatus? = entries.firstOrNull { it.value == value }
     }
 }
@@ -49,7 +52,8 @@ enum class NotificationStatus(val value: String) {
 /**
  * 通知スケジュール（notification_schedules）。独立集約。
  * user / event は値参照（[userUuid] / [eventUuid]）。
- * 状態遷移: pending → processing → completed / failed。cancel は pending / processing から可。
+ * 状態遷移: pending → processing → completed / failed。処理全体の失敗時だけ processing → pending を許可する。
+ * cancel は pending / processing から可。
  */
 @ConsistentCopyVisibility
 data class NotificationSchedule private constructor(
@@ -60,15 +64,23 @@ data class NotificationSchedule private constructor(
     val notificateTime: Instant,
     val status: NotificationStatus,
 ) {
+    /** 未処理の通知を処理中へ遷移させる。 */
     fun markProcessing(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(NotificationStatus.Processing, allowedFrom = setOf(NotificationStatus.Pending))
 
+    /** 処理全体の失敗後に、次回実行で再取得できる状態へ戻す。 */
+    fun returnToPending(): Either<NotificationError.TransitionError, NotificationSchedule> =
+        transitionTo(NotificationStatus.Pending, allowedFrom = setOf(NotificationStatus.Processing))
+
+    /** 処理中の通知を完了へ遷移させる。 */
     fun complete(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(NotificationStatus.Completed, allowedFrom = setOf(NotificationStatus.Processing))
 
+    /** 処理中の通知を失敗へ遷移させる。 */
     fun fail(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(NotificationStatus.Failed, allowedFrom = setOf(NotificationStatus.Processing))
 
+    /** 未処理または処理中の通知を取消へ遷移させる。 */
     fun cancel(): Either<NotificationError.TransitionError, NotificationSchedule> =
         transitionTo(
             NotificationStatus.Canceled,

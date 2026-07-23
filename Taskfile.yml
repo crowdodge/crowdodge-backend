@@ -2,6 +2,9 @@
 # Gradle プロジェクトは server/ 配下にあるため、各タスクで dir: server を指定する。
 version: '3'
 
+vars:
+  COMPOSE_DEV: "docker compose -f compose.yaml -f compose.dev.yaml"
+
 tasks:
   detekt:
     desc: detekt で静的解析＋整形チェック（CI と同じ検査）
@@ -63,3 +66,24 @@ tasks:
           END LOOP;
         END $$;
         SQL
+
+  # 再構築
+  docker:rebuild:
+    desc: "Rebuild image and restart containers."
+    cmds:
+      - "{{.COMPOSE_DEV}} down --remove-orphans --timeout 15"
+      - "{{.COMPOSE_DEV}} up --build -d"
+
+  # キャッシュを破棄して再構築
+  docker:rebuild_without_cache:
+    desc: "Rebuild image and restart container without cache."
+    cmds:
+      - "{{.COMPOSE_DEV}} down -v --rmi local --remove-orphans --timeout 15"
+      - "{{.COMPOSE_DEV}} up --build -d"
+
+  # 未使用[イメージ, コンテナ, ネットワーク, ボリューム]+キャッシュ削除
+  docker:prune:all:
+    desc: "Remove all unused images, containers, networks, volumes, and build cache."
+    prompt: "This will delete unused images, containers, networks, volumes, and build cache. Continue?"
+    cmds:
+      - docker system prune --all --volumes

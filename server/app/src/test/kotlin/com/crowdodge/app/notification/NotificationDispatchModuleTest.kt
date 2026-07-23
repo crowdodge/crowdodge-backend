@@ -42,5 +42,8 @@ private fun notificationDispatchEnvironment() = applicationEnvironment {
         "crowdodge.database.password" to "crowdodge",
         "crowdodge.database.sslMode" to "disable",
         "crowdodge.database.pgbouncer" to "false",
+        "crowdodge.congestion.gemini.apiBaseUrl" to "http://localhost",
+        "crowdodge.congestion.gemini.apiKey" to "test-key",
+        "crowdodge.congestion.gemini.maxConcurrency" to "10",
     )
 }

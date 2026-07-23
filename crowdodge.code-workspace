@@ -1,0 +1,15 @@
+{
+    "folders": [
+        {
+            "name": "monorepo-root",
+            "path": "./"
+        },
+        {
+            "name": "server root (Gradle root)",
+            "path": "./server"
+        }
+    ],
+    "settings": {
+        "terminal.integrated.cwd": "${workspaceFolder:server root (Gradle root)}"
+    }
+}

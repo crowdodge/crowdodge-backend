@@ -56,3 +56,9 @@ subprojects {
         input.from(tasks.withType<Detekt>().map { it.sarifReportFile })
     }
 }
+
+tasks.register<DefaultTask>("resolveAllDependencies") {
+    group = "docker build setup"
+    description = "全サブプロジェクトの依存関係をまとめて実行する"
+    dependsOn(subprojects.map { "${it.path}:dependencies" })
+}
