@@ -14,11 +14,12 @@ class GoogleCalendarRoutingIntegrationTest : FunSpec({
             environment {
                 config = routingTestConfig()
             }
-            client.post("/webhooks/google-calendar").status shouldBe HttpStatusCode.BadRequest
+
             application {
                 module()
             }
 
+            client.post("/webhooks/google-calendar").status shouldBe HttpStatusCode.BadRequest
             client.get("/v1/users/me/calendars").status shouldBe HttpStatusCode.Unauthorized
         }
     }
