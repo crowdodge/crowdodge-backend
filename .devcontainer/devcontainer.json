@@ -1,0 +1,66 @@
+{
+    // スキーマ
+    "$schema": "https://raw.githubusercontent.com/devcontainers/spec/main/schemas/devContainer.schema.json",
+    // 設定
+    "name": "MyApp Dev",
+    "dockerComposeFile": [
+        "../compose.yaml",
+        "../compose.dev.yaml"
+    ],
+    "service": "server",
+    "overrideCommand": false, // コンテナのCMDをそのまま利用する
+    "shutdownAction": "none",
+    "workspaceFolder": "/workspace",
+    // 追加設定
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                // 共通
+                "artdiniz.quitcontrol-vscode", // cmd + qで終了させない
+                "christian-kohler.path-intellisense", // パス補完
+                "usernamehw.errorlens", // エラーをインライン。
+                "waderyan.gitblame", // 変更履歴をインライン。
+                "bierner.markdown-mermaid", // マーメイド。
+                "bpruitt-goddard.mermaid-markdown-syntax-highlighting", // マーメイドをハイライト。
+                "davidanson.vscode-markdownlint", // Markdownのリンタ。
+                "yzane.markdown-pdf", // MarkdownをPDF表示。
+                "yzhang.markdown-all-in-one", // マークダウン。
+                "redhat.vscode-yaml", // Yaml
+                "tamasfe.even-better-toml", // Toml
+                "mikestead.dotenv", // envファイルのシンタックスハイライト
+                "ms-azuretools.vscode-docker", // Docker
+                "humao.rest-client", // httpの簡易テスト。
+                // app
+                "jetbrains.kotlin-server", // kotlin lsp
+                // "redhat.java", // java pack Java // .javaが混在する場合は追加検討
+                // "vscjava.vscode-java-debug", // java pack debugger
+                // "vscjava.vscode-java-test", // java pack test runner
+                "vscjava.vscode-gradle", // java pack gradle
+                // "vscjava.vscode-java-dependency", // java pack pj manager
+                "editorconfig.editorconfig", // ktlintが参照する設定ファイルのサポートeditorconfig.editorconfig
+                "mattheworford.hocon-tools", // HOCON
+                "emeraldwalk.runonsave" // 保存時にktlint cliを叩くためのツール
+            ]
+        },
+        "jetbrains" : {
+            "backend" : "IntelliJ",
+            "plugins" : [
+                "com.intellij.exposed",
+                "com.intellij.reactivestreams",
+                "org.jetbrains.plugins.hocon"
+            ],
+        },
+    },
+    "remoteUser": "app",
+    // ライフサイクルスクリプト
+    // "postCreateCommand": "",
+    // ツール
+    "features": {
+        // ツールセット
+        "ghcr.io/devcontainers/features/common-utils:2": {},
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers-extra/features/apt-packages": {
+            "packages": "iputils-ping"
+        }
+    }
+}

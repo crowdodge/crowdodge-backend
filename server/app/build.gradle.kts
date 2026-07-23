@@ -1,3 +1,6 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.transformers.AppendingTransformer
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -6,6 +9,12 @@ plugins {
 
 kotlin {
     jvmToolchain(21)
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("app.jar")
+    }
 }
 
 application {
@@ -73,4 +82,27 @@ tasks.register<JavaExec>("generateMigration") {
     description = "Exposed の Table 定義から差分マイグレーション SQL を生成する（枠）"
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = "com.crowdodge.app.migration.GenerateMigrationMainKt"
+}
+
+// ビルド時の設定
+tasks.named<JavaExec>("run") {
+  jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005")
+}
+tasks.named<Delete>("clean") {
+  setDelete(fileTree(layout.buildDirectory))
+}
+tasks.named<ShadowJar>("shadowJar") {
+    // NOTE: [以降例](https://gradleup.com/shadow/changes/#migration-example)に従って、マージすべきか・先勝ちで良いかを判断する
+
+    // デフォルト設定
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    mergeServiceFiles()
+
+    // 以下に例外設定を追加
+
+    // ServiceLoaderのKtorの設定ローダの重複をマージ
+    filesMatching("META-INF/services/**") {
+        // 想定は`io.ktor.server.config.ConfigLoader`
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }

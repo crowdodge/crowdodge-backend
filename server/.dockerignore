@@ -1,0 +1,14 @@
+# 依存パッケージ
+.gradle/
+
+# 開発用ツール
+.editorconfig
+
+# テスト
+# `./gradlew build`はデフォルトでテストのチェックを含む
+# src/test
+
+# ビルド成果物
+build/
+**/build/
+out/
