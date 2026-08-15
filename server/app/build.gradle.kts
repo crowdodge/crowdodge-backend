@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
@@ -6,6 +8,12 @@ plugins {
 
 kotlin {
     jvmToolchain(21)
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("app.jar")
+    }
 }
 
 application {
@@ -95,4 +103,32 @@ tasks.register<JavaExec>("dispatchNotifications") {
     description = "期限到来した通知スケジュールの FCM 送信を1回実行する"
     classpath = sourceSets["main"].runtimeClasspath
     mainClass = "com.crowdodge.app.notification.NotificationDispatchMainKt"
+}
+
+// デバッグ設定（entry build.gradle.kts）
+tasks.named<JavaExec>("run") {
+  jvmArgs("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=0.0.0.0:5005")
+}
+
+// cleanタスクの変更（entry build.gradle.kts）
+// cleanタスク時に、build/ディレクトリごとではなくディレクトリの中身だけ削除する。
+tasks.named<Delete>("clean") {
+  setDelete(fileTree(layout.buildDirectory))
+}
+
+// ビルド設定（entry build.gradle.kts）
+tasks.named<ShadowJar>("shadowJar") {
+    // NOTE: [以降例](https://gradleup.com/shadow/changes/#migration-example)に従って、マージすべきか・先勝ちで良いかを判断する
+
+    // デフォルト設定
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    mergeServiceFiles()
+
+    // 以下に例外設定を追加
+
+    // ServiceLoaderのKtorの設定ローダの重複をマージ
+    filesMatching("META-INF/services/**") {
+        // 想定は`io.ktor.server.config.ConfigLoader`
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    }
 }

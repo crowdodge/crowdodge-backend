@@ -13,6 +13,8 @@ out/
 
 # env / シークレット（Google / Gemini / FCM / RevenueCat は環境変数で注入 §13）
 .env
+.env.*
+!.env*example
 *.local.conf
 secrets/
 
@@ -21,3 +23,5 @@ secrets/
 
 # ログ
 *.log
+
+todo.md

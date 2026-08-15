@@ -14,6 +14,7 @@ class GoogleCalendarRoutingIntegrationTest : FunSpec({
             environment {
                 config = routingTestConfig()
             }
+
             application {
                 module()
             }

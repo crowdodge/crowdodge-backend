@@ -1,0 +1,23 @@
+services:
+  # Infrastructure
+  db:
+    image: imresamu/postgis:18-3.6
+    # PostgreSQL 18+ はデータを /var/lib/postgresql 配下のバージョン別サブディレクトリに置く。
+    # 旧来の /var/lib/postgresql/data ではなく /var/lib/postgresql をマウントする。
+    volumes:
+      - pgdata:/var/lib/postgresql
+    stop_grace_period: 30s
+    healthcheck:
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Backend
+  server:
+    build:
+      context: "./server/"
+      dockerfile: Dockerfile
+
+volumes:
+  pgdata:
