@@ -11,10 +11,12 @@ import com.crowdodge.app.calendar.jwtAppTokenConfig
 import com.crowdodge.app.db.databaseConfig
 import com.crowdodge.app.notification.EventNotificationScheduleHandler
 import com.crowdodge.event.application.port.CalendarConnectionProvider
+import com.crowdodge.event.application.port.EventEnrichmentReadModel
 import com.crowdodge.event.di.eventModule
 import com.crowdodge.event.infrastructure.google.GoogleCalendarConfig
 import com.crowdodge.notification.application.port.RegistrationReadModelPort
 import com.crowdodge.notification.di.notificationModule
+import com.crowdodge.readmodel.event.ExposedEventEnrichmentReadModel
 import com.crowdodge.readmodel.notification.ExposedNotificationReadModel
 import com.crowdodge.shared.infra.db.DatabaseConfig
 import com.crowdodge.shared.infra.db.DatabaseReadinessProbe
@@ -73,6 +75,7 @@ fun appModule(environment: ApplicationEnvironment): Module {
         // 登録系通知スケジュール作成用の BC 横断読み取り。
         single { ExposedNotificationReadModel(get()) }
         single<RegistrationReadModelPort> { get<ExposedNotificationReadModel>() }
+        single<EventEnrichmentReadModel> { ExposedEventEnrichmentReadModel(get()) }
         single<DomainEventHandler>(qualifier = named("calendarInitialSync")) {
             CalendarInitialSyncRequestedHandler(get())
         }
