@@ -4,6 +4,7 @@ import com.crowdodge.event.application.command.HandleGoogleCalendarWebhookUseCas
 import com.crowdodge.event.application.port.CalendarSyncStatePort
 import com.crowdodge.event.application.port.CalendarWatchRegistrationGateway
 import com.crowdodge.event.application.port.GoogleCalendarEventsGateway
+import com.crowdodge.event.application.query.ListEventEnrichmentsUseCase
 import com.crowdodge.event.application.service.GoogleCalendarEventSynchronizer
 import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleService
 import com.crowdodge.event.domain.repository.EventRepository
@@ -43,4 +44,5 @@ fun eventModule() = module {
         )
     }
     single<HandleGoogleCalendarWebhookUseCase> { HandleGoogleCalendarWebhookUseCase(get(), get(), get()) }
+    single<ListEventEnrichmentsUseCase> { ListEventEnrichmentsUseCase(get()) }
 }

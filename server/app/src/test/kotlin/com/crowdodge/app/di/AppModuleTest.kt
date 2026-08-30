@@ -4,6 +4,7 @@ import com.crowdodge.app.calendar.CalendarInitialSyncRequestedHandler
 import com.crowdodge.app.calendar.MaintainGoogleCalendarSyncCoordinator
 import com.crowdodge.app.calendar.ReplaceGoogleCalendarSelectionCoordinator
 import com.crowdodge.app.notification.EventNotificationScheduleHandler
+import com.crowdodge.event.application.query.ListEventEnrichmentsUseCase
 import com.crowdodge.event.application.service.GoogleCalendarSyncLifecycleService
 import com.crowdodge.shared.infra.messaging.TransactionalInProcessDomainEventPublisher
 import com.crowdodge.shared.kernel.DomainEventHandler
@@ -49,6 +50,8 @@ class AppModuleTest : FunSpec({
                 .shouldBeInstanceOf<MaintainGoogleCalendarSyncCoordinator>()
             koin.get<ProxyGoogleCalendarUseCase>()
                 .shouldBeInstanceOf<ProxyGoogleCalendarUseCase>()
+            koin.get<ListEventEnrichmentsUseCase>()
+                .shouldBeInstanceOf<ListEventEnrichmentsUseCase>()
         } finally {
             koinApplication.close()
         }
