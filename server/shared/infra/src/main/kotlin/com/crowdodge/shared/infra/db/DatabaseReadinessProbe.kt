@@ -39,6 +39,6 @@ class DatabaseReadinessProbe(
 
     private companion object {
         private val log = LoggerFactory.getLogger(DatabaseReadinessProbe::class.java)
-        private val DEFAULT_TIMEOUT: Duration = 2.seconds
+        private val DEFAULT_TIMEOUT: Duration = 5.seconds
     }
 }

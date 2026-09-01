@@ -192,6 +192,22 @@ class MaintainGoogleCalendarSyncCoordinatorTest : FunSpec({
             fixture.coordinator.execute()
         }
     }
+
+    test("資格情報を取得できないユーザーの同期状態を保持して失敗件数へ加える") {
+        val fixture = maintenanceFixture(
+            selectedIds = listOf("work"),
+            tokenFailure = UserError.AuthenticationError.InvalidRefreshToken,
+        )
+        fixture.states.states[fixture.eventUuid("work")] =
+            syncState(fixture.eventUuid("work"), "channel-work")
+
+        val result = fixture.coordinator.execute()
+
+        result shouldBe MaintenanceResult(succeeded = 0, failed = 1)
+        fixture.states.states.keys shouldContainExactly listOf(fixture.eventUuid("work"))
+        fixture.watches.started.shouldBeEmpty()
+        fixture.watches.stopped.shouldBeEmpty()
+    }
 })
 
 private data class MaintenanceFixture(
@@ -212,6 +228,7 @@ private fun maintenanceFixture(
     listItems: List<GoogleCalendarListItem> = selectedIds.map {
         GoogleCalendarListItem(it, it, null, false, GoogleCalendarAccessRole.OWNER)
     },
+    tokenFailure: UserError? = null,
 ): MaintenanceFixture {
     val userUuid = UserUuid(Uuid.parse("00000000-0000-0000-0000-000000000001"))
     val operations = mutableListOf<String>()
@@ -219,12 +236,7 @@ private fun maintenanceFixture(
     val repository = MaintenanceUserCalendarRepository(operations)
     selectedIds.forEach { repository.add(userUuid, it) }
     val calendarList = GoogleCalendarListGateway { listItems.right() }
-    val tokenProvider = GoogleAccessTokenProvider(
-        credentials = MaintenanceCredentialRepository(userUuid),
-        refreshGateway = GoogleOAuthTokenRefreshGateway { error("not called") },
-        transactions = transactions,
-        clock = MaintenanceClock,
-    )
+    val tokenProvider = maintenanceTokenProvider(userUuid, transactions, tokenFailure)
     val selections = UserCalendarSelectionService(
         calendarList = calendarList,
         accessTokens = tokenProvider,
@@ -270,6 +282,20 @@ private fun maintenanceFixture(
         connections = connections,
         operations = operations,
     )
+}
+
+private fun maintenanceTokenProvider(
+    userUuid: UserUuid,
+    transactions: TransactionRunner,
+    tokenFailure: UserError?,
+) = object : GoogleAccessTokenProvider(
+    credentials = MaintenanceCredentialRepository(userUuid),
+    refreshGateway = GoogleOAuthTokenRefreshGateway { error("not called") },
+    transactions = transactions,
+    clock = MaintenanceClock,
+) {
+    override suspend fun get(userUuid: UserUuid): Either<UserError, String> =
+        tokenFailure?.left() ?: super.get(userUuid)
 }
 
 private class MaintenanceWatchGateway(
