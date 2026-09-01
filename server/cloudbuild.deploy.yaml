@@ -1,0 +1,117 @@
+steps:
+  - id: Build image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --no-cache
+      - --tag=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+      - --file=server/Dockerfile
+      - server
+
+  - id: Push image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+
+  - id: Update migration job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - ${_MIGRATION_JOB}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+      - --command=java
+      - --args=-cp,/app/lib/*,com.crowdodge.app.migration.MigrateMainKt
+      - --service-account=migration-runtime@$PROJECT_ID.iam.gserviceaccount.com
+      - --tasks=1
+      - --max-retries=0
+      - --task-timeout=600s
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+  - id: Apply migration
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - execute
+      - ${_MIGRATION_JOB}
+      - --wait
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+  - id: Deploy API service
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - services
+      - update
+      - ${_SERVICE_NAME}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+      - --service-account=crowdodge-api-runtime@$PROJECT_ID.iam.gserviceaccount.com
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+  - id: Update calendar watch job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - ${_CALENDAR_JOB}
+      - --container=google-calendar-watch-renewal
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+      - --command=java
+      - --args=-cp,/app/lib/*,com.crowdodge.app.calendar.GoogleCalendarWatchRenewalMainKt
+      - --service-account=calendar-watch-runtime@$PROJECT_ID.iam.gserviceaccount.com
+      - --tasks=1
+      - --max-retries=0
+      - --task-timeout=600s
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+  - id: Update notification dispatch job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - update
+      - ${_NOTIFICATION_JOB}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+      - --command=java
+      - --args=-cp,/app/lib/*,com.crowdodge.app.notification.NotificationDispatchMainKt
+      - --service-account=notification-runtime@$PROJECT_ID.iam.gserviceaccount.com
+      - --tasks=1
+      - --parallelism=1
+      - --max-retries=0
+      - --task-timeout=600s
+      - --region=${_REGION}
+      - --project=$PROJECT_ID
+      - --quiet
+
+substitutions:
+  _REGION: asia-northeast1
+  _AR_REPOSITORY: cloud-run-source-deploy
+  _SERVICE_NAME: crowdodge-backend
+  _MIGRATION_JOB: crowdodge-migrate
+  _CALENDAR_JOB: google-calendar-watch-renewal
+  _NOTIFICATION_JOB: notification-dispatch
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
