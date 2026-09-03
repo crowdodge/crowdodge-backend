@@ -10,7 +10,7 @@
 |---|---|---|---|
 | API service | Cloud Run Service | OpenAPIで定義するHTTP APIと外部Webhookの提供 | HTTPリクエスト |
 | Google Calendar watch renewal | Cloud Run Job | 選択済みGoogle Calendarと同期状態を整合し、watchを更新する | Cloud Scheduler、毎日 03:00 JST |
-| Notification dispatch | Cloud Run Job | 到来した通知を送信する | Cloud Scheduler、5分ごと |
+| Notification dispatch | Cloud Run Job | 到来した通知を送信する | Cloud Scheduler、15分ごと |
 | Schema migration | 1回実行 | API serviceのデプロイ前にDBスキーマを更新する | デプロイパイプライン |
 
 ## 環境変数

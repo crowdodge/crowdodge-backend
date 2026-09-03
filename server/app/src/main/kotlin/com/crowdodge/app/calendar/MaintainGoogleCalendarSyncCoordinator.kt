@@ -26,7 +26,17 @@ class MaintainGoogleCalendarSyncCoordinator(
 
         var inaccessibleSucceeded = 0
         var inaccessibleFailed = 0
-        val preserved = mutableSetOf<EventUserCalendarUuid>()
+        val preserved = snapshot.inspectionFailures
+            .flatMap { it.selections }
+            .mapTo(mutableSetOf()) { EventUserCalendarUuid(it.userCalendarUuid.value) }
+        val inspectionFailed = snapshot.inspectionFailures.sumOf { it.selections.size }
+        snapshot.inspectionFailures.forEach { failure ->
+            logger.warn(
+                "Failed to inspect selected Google Calendars for one user: selections={}, reason={}",
+                failure.selections.size,
+                failure.error.code,
+            )
+        }
         snapshot.inaccessible.forEach { connection ->
             runCatchingPreservingCancellation {
                 selections.removeSelection(connection.userUuid, connection.userCalendarUuid)
@@ -51,7 +61,7 @@ class MaintainGoogleCalendarSyncCoordinator(
 
         val result = MaintenanceResult(
             succeeded = syncResult.succeeded + inaccessibleSucceeded,
-            failed = syncResult.failed + inaccessibleFailed,
+            failed = syncResult.failed + inaccessibleFailed + inspectionFailed,
         )
         logger.info(
             "Google Calendar maintenance finished: succeeded={}, failed={}",

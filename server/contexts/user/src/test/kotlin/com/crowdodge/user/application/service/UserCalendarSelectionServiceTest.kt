@@ -149,7 +149,7 @@ class UserCalendarSelectionServiceTest : FunSpec({
             accessToken = secret,
         )
         val plan = CalendarSelectionPlan(userUuid, listOf(connection), emptyList(), emptyList())
-        val snapshot = CalendarSelectionMaintenanceSnapshot(listOf(connection), emptyList())
+        val snapshot = CalendarSelectionMaintenanceSnapshot(listOf(connection), emptyList(), emptyList())
 
         plan.toString().contains(secret) shouldBe false
         snapshot.toString().contains(secret) shouldBe false
@@ -207,15 +207,33 @@ class UserCalendarSelectionServiceTest : FunSpec({
         )
 
         service.inspectAllSelected().getOrNull() shouldBe
-            CalendarSelectionMaintenanceSnapshot(emptyList(), emptyList())
+            CalendarSelectionMaintenanceSnapshot(emptyList(), emptyList(), emptyList())
     }
 
-    test("全選択監査で資格情報を取得できなければ失敗を返す") {
+    test("資格情報を取得できないユーザーを保持対象として他ユーザーの監査を続ける") {
+        val otherUserUuid = UserUuid(Uuid.parse("10000000-0000-0000-0000-000000000002"))
         val repository = FakeCalendarRepository(mutableListOf(selectedCalendar(userUuid, "one")))
+        repository.items += selectedCalendar(otherUserUuid, "two")
+        val requestedUsers = mutableListOf<UserUuid>()
         val service = UserCalendarSelectionService(
-            calendarList = GoogleCalendarListGateway { error("呼ばれない") },
-            accessTokens = tokenProvider {
-                com.crowdodge.user.domain.error.UserError.ExternalError.GoogleOAuthError.left()
+            calendarList = GoogleCalendarListGateway { requestedUserUuid ->
+                requestedUsers += requestedUserUuid
+                listOf(
+                    GoogleCalendarListItem(
+                        id = "two",
+                        name = "calendar",
+                        color = null,
+                        primary = false,
+                        accessRole = GoogleCalendarAccessRole.OWNER,
+                    ),
+                ).right()
+            },
+            accessTokens = tokenProvider { requestedUserUuid ->
+                if (requestedUserUuid == userUuid) {
+                    com.crowdodge.user.domain.error.UserError.ExternalError.GoogleOAuthError.left()
+                } else {
+                    "second-access".right()
+                }
             },
             calendars = repository,
             transactions = RecordingTransactions(),
@@ -223,7 +241,12 @@ class UserCalendarSelectionServiceTest : FunSpec({
             clock = FixedSelectionClock(now),
         )
 
-        service.inspectAllSelected().leftOrNull() shouldBe
+        val snapshot = service.inspectAllSelected().getOrNull()!!
+
+        requestedUsers shouldContainExactly listOf(otherUserUuid)
+        snapshot.eligible.map { it.googleCalendarId } shouldContainExactly listOf("two")
+        snapshot.inspectionFailures.single().selections.map { it.googleCalendarId } shouldContainExactly listOf("one")
+        snapshot.inspectionFailures.single().error shouldBe
             com.crowdodge.user.domain.error.UserError.ExternalError.GoogleOAuthError
     }
 })

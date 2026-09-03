@@ -57,7 +57,21 @@ data class CalendarSelectionPlan(
 data class CalendarSelectionMaintenanceSnapshot(
     val eligible: List<SelectedCalendarConnection>,
     val inaccessible: List<SelectedCalendarConnection>,
+    val inspectionFailures: List<CalendarSelectionInspectionFailure>,
 )
+
+data class CalendarSelectionInspectionFailure(
+    val selections: List<SelectedUserCalendar>,
+    val error: UserError,
+)
+
+private data class InspectedCalendarSelections(
+    val eligible: List<SelectedCalendarConnection>,
+    val inaccessible: List<SelectedCalendarConnection>,
+)
+
+private val eligibleCalendarAccessRoles =
+    setOf(GoogleCalendarAccessRole.OWNER, GoogleCalendarAccessRole.WRITER)
 
 class UserCalendarSelectionService(
     private val calendarList: GoogleCalendarListGateway,
@@ -85,7 +99,7 @@ class UserCalendarSelectionService(
         }
         val available = calendarList.listAll(userUuid).fold({ return it.left() }, { it })
         val byId = available.associateBy { it.id }
-        if (calendarIds.any { byId[it]?.accessRole !in ELIGIBLE_ROLES }) {
+        if (calendarIds.any { byId[it]?.accessRole !in eligibleCalendarAccessRoles }) {
             return UserError.AuthorizationError.InsufficientCalendarAccess.left()
         }
         val token = accessTokens.get(userUuid).fold({ return it.left() }, { it })
@@ -134,30 +148,21 @@ class UserCalendarSelectionService(
     suspend fun listSelected(userUuid: UserUuid): List<SelectedUserCalendar> =
         transactions.readOnly { calendars.findByUserUuid(userUuid) }.map { it.toSelected() }
 
-    @Suppress("ReturnCount")
     suspend fun inspectAllSelected(): Either<UserError, CalendarSelectionMaintenanceSnapshot> {
         val all = transactions.readOnly { calendars.findAll() }
         val eligible = mutableListOf<SelectedCalendarConnection>()
         val inaccessible = mutableListOf<SelectedCalendarConnection>()
-        for ((userUuid, selected) in all.groupBy { it.userUuid }) {
-            val token = accessTokens.get(userUuid).fold({ return it.left() }, { it })
-            val available = calendarList.listAll(userUuid).fold({ return it.left() }, { it })
-                .associateBy { it.id }
-            selected.forEach {
-                val connection = SelectedCalendarConnection(
-                    it.userCalendarUuid,
-                    userUuid,
-                    it.googleCalendarId.value,
-                    token,
-                )
-                if (available[it.googleCalendarId.value]?.accessRole in ELIGIBLE_ROLES) {
-                    eligible += connection
-                } else {
-                    inaccessible += connection
-                }
-            }
+        val inspectionFailures = mutableListOf<CalendarSelectionInspectionFailure>()
+        all.groupBy { it.userUuid }.forEach { (userUuid, selected) ->
+            inspectSelectedForUser(accessTokens, calendarList, userUuid, selected).fold(
+                ifLeft = { inspectionFailures += it },
+                ifRight = {
+                    eligible += it.eligible
+                    inaccessible += it.inaccessible
+                },
+            )
         }
-        return CalendarSelectionMaintenanceSnapshot(eligible, inaccessible).right()
+        return CalendarSelectionMaintenanceSnapshot(eligible, inaccessible, inspectionFailures).right()
     }
 
     private fun GoogleCalendarListItem.toSelectable(selected: Boolean) =
@@ -184,8 +189,39 @@ class UserCalendarSelectionService(
 
     private companion object {
         const val MAX_SELECTIONS = 3
-        val ELIGIBLE_ROLES = setOf(GoogleCalendarAccessRole.OWNER, GoogleCalendarAccessRole.WRITER)
     }
+}
+
+private suspend fun inspectSelectedForUser(
+    accessTokens: GoogleAccessTokenProvider,
+    calendarList: GoogleCalendarListGateway,
+    userUuid: UserUuid,
+    selected: List<UserCalendar>,
+): Either<CalendarSelectionInspectionFailure, InspectedCalendarSelections> = either {
+    val selectedCalendars = selected.map {
+        SelectedUserCalendar(it.userCalendarUuid, it.userUuid, it.googleCalendarId.value)
+    }
+    fun failure(error: UserError) = CalendarSelectionInspectionFailure(selectedCalendars, error)
+    val token = accessTokens.get(userUuid).mapLeft(::failure).bind()
+    val available = calendarList.listAll(userUuid)
+        .mapLeft(::failure)
+        .bind()
+        .associateBy(GoogleCalendarListItem::id)
+    val (eligible, inaccessible) = selected
+        .map {
+            val connection = SelectedCalendarConnection(
+                it.userCalendarUuid,
+                userUuid,
+                it.googleCalendarId.value,
+                token,
+            )
+            connection to (available[it.googleCalendarId.value]?.accessRole in eligibleCalendarAccessRoles)
+        }
+        .partition { it.second }
+    InspectedCalendarSelections(
+        eligible = eligible.map { it.first },
+        inaccessible = inaccessible.map { it.first },
+    )
 }
 
 private class CalendarReplacementFailed(
