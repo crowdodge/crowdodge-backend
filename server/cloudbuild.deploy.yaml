@@ -68,7 +68,6 @@ steps:
       - jobs
       - update
       - ${_CALENDAR_JOB}
-      - --container=google-calendar-watch-renewal
       - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPOSITORY}/${_SERVICE_NAME}:$BUILD_ID
       - --command=java
       - --args=-cp,/app/lib/*,com.crowdodge.app.calendar.GoogleCalendarWatchRenewalMainKt
