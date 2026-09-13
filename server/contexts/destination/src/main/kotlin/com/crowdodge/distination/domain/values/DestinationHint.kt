@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.values
 
 @JvmInline
 value class DestinationHint(val value: String) {

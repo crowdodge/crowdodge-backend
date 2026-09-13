@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.aggregates.eventdestination
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure

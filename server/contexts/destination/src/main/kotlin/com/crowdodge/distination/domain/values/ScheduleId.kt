@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.values
 
 import arrow.core.raise.Raise
 import arrow.core.raise.ensure

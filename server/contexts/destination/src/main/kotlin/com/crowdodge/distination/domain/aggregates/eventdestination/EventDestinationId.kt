@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.aggregates.eventdestination
 
 import com.crowdodge.shared.kernel.EntityUuid
 import kotlin.uuid.Uuid

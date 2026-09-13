@@ -1,5 +1,6 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.values
 
+import com.crowdodge.distination.domain.aggregates.eventdestination.RecurringScheduleId
 import com.crowdodge.shared.kernel.UserUuid
 
 // HACK: VOで良い可能性

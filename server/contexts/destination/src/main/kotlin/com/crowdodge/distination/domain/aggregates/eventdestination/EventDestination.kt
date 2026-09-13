@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.aggregates.eventdestination
 
 class EventDestination(
     val id: EventDestinationId,

@@ -1,4 +1,4 @@
-package com.crowdodge.distination.domain
+package com.crowdodge.distination.domain.aggregates.eventdestination
 
 data class RouteStep (
     val fromName: String,
