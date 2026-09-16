@@ -12,7 +12,7 @@ import com.crowdodge.distination.domain.error.DestinationError
 @JvmInline
 value class RecurringScheduleId private constructor(val value: String) { // NOTE: バリデーション経由の実行を強制する
     companion object {
-        fun  Raise<DestinationError.ValidationError>.recurringScheduleId(value: String): RecurringScheduleId {
+        fun  Raise<DestinationError.ValidationError>.from(value: String): RecurringScheduleId {
             val trimmed = value.trim()
             ensure(trimmed.isNotBlank()) {DestinationError.ValidationError.BlankRecurringScheduleId}
             return RecurringScheduleId(trimmed)
